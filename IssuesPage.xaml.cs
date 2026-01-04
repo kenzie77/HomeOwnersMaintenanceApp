@@ -16,19 +16,41 @@ namespace HomeMaintenanceApp.Pages
 
             _manager = new MaintenanceManager();
 
-            // Load previously saved issues
             _manager.LoadIssuesFromPreferences();
+            _manager.LoadIssuesHistoryFromPreferences();
 
-            IssuesView.ItemsSource = _manager.Issues;
+            ShowActive();
         }
+
+        private void ShowActive()
+        {
+            IssuesView.ItemsSource = _manager.Issues;
+
+            ActiveBtn.BackgroundColor = Colors.SteelBlue;
+            ActiveBtn.TextColor = Colors.White;
+            HistoryBtn.BackgroundColor = Colors.Transparent;
+            HistoryBtn.TextColor = Colors.White;
+        }
+
+        private void ShowHistory()
+        {
+            IssuesView.ItemsSource = _manager.IssuesHistory;
+
+            HistoryBtn.BackgroundColor = Colors.SteelBlue;
+            HistoryBtn.TextColor = Colors.White;
+            ActiveBtn.BackgroundColor = Colors.Transparent;
+            ActiveBtn.TextColor = Colors.White;
+        }
+
+        private void OnShowActive(object sender, EventArgs e) => ShowActive();
+        private void OnShowHistory(object sender, EventArgs e) => ShowHistory();
 
         // ------------------ Add ------------------
         private void OnAddIssueClicked(object sender, EventArgs e)
         {
-            // Create a new editable issue row
             var issue = new IssueRecord
             {
-                Title = "New Issue",   // user will immediately overwrite this via Entry
+                Title = "New Issue",
                 Description = "",
                 Severity = IssueSeverity.Minor,
                 Resolved = false,
@@ -37,8 +59,9 @@ namespace HomeMaintenanceApp.Pages
                 FixNotes = ""
             };
             _manager.AddIssue(issue);
-            // NOTE: focusing the Entry inside a DataTemplate is tricky cross-platform;
-            // user taps the Title field to edit. If you want auto-focus, we can add a popup/editor later.
+
+            // Ensure user sees it in Active
+            ShowActive();
         }
 
         // ------------------ Inline edits ------------------
@@ -46,7 +69,6 @@ namespace HomeMaintenanceApp.Pages
         {
             if (sender is Entry entry && entry.BindingContext is IssueRecord issue)
             {
-                // Update title and persist
                 issue.Title = entry.Text?.Trim() ?? "";
                 _manager.UpdateIssue(issue);
             }
@@ -87,8 +109,16 @@ namespace HomeMaintenanceApp.Pages
         {
             if (sender is CheckBox cb && cb.BindingContext is IssueRecord issue)
             {
-                issue.Resolved = e.Value;
-                _manager.UpdateIssue(issue);
+                if (e.Value == true)
+                {
+                    _manager.ResolveIssue(issue.Id);
+                    ShowActive(); // refresh Active list since the item moved to History
+                }
+                else
+                {
+                    // If you ever want "unresolve" behavior, you can move it back;
+                    // For now we keep History strict.
+                }
             }
         }
 
@@ -115,8 +145,8 @@ namespace HomeMaintenanceApp.Pages
         {
             if (sender is SwipeItem swipe && swipe.BindingContext is IssueRecord issue)
             {
-                issue.Resolved = true;
-                _manager.UpdateIssue(issue);
+                _manager.ResolveIssue(issue.Id);
+                ShowActive();
             }
         }
 
@@ -124,7 +154,14 @@ namespace HomeMaintenanceApp.Pages
         {
             if (sender is SwipeItem swipe && swipe.BindingContext is IssueRecord issue)
             {
-                _manager.DeleteIssue(issue.Id);
+                // Delete from whichever list is currently showing
+                if (IssuesView.ItemsSource == _manager.Issues)
+                    _manager.DeleteIssue(issue.Id);
+                else
+                {
+                    _manager.IssuesHistory.Remove(issue);
+                    _manager.SaveIssuesHistoryToPreferences();
+                }
             }
         }
     }

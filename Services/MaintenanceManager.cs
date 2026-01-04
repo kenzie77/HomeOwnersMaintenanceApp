@@ -12,7 +12,7 @@ using ModelsTaskStatus = HomeMaintenanceApp.Models.TaskStatus;
 namespace HomeMaintenanceApp.Services
 {
     /// <summary>
-    /// Central in-memory manager for property, appliances, tasks, issues, and checklists.
+    /// Central in-memory manager for property, appliances, tasks, issues, checklists, and knowledge.
     /// Bind ObservableCollection<T> directly to your CollectionViews for live updates.
     /// </summary>
     public class MaintenanceManager
@@ -20,7 +20,10 @@ namespace HomeMaintenanceApp.Services
         // ------------------------- Core collections --------------------------
         public ObservableCollection<MaintenanceTask> Tasks { get; } = new();
         public ObservableCollection<Appliance> Appliances { get; } = new();
+
+        // Active issues & History of resolved issues
         public ObservableCollection<IssueRecord> Issues { get; } = new();
+        public ObservableCollection<IssueRecord> IssuesHistory { get; } = new();
 
         // ------------------------- Property ----------------------------------
         public Property? Property { get; set; }
@@ -35,17 +38,18 @@ namespace HomeMaintenanceApp.Services
 
         // ------------------------- Knowledge ---------------------------------
         public ObservableCollection<string> KnowledgeResources { get; } = new(); // user notes
-        public IList<string> KnowledgeToolsView { get; } = new List<string>();   // seeded
+        public IList<string> KnowledgeToolsView { get; } = new List<string>();   // seeded tools view
         public record UsefulLifeRow(string Item, string Life);
-        public IList<UsefulLifeRow> KnowledgeUsefulLife { get; } = new List<UsefulLifeRow>(); // seeded
+        public IList<UsefulLifeRow> KnowledgeUsefulLife { get; } = new List<UsefulLifeRow>(); // seeded life chart
 
         // ------------------------- Preferences keys --------------------------
         private const string PREF_KEY_SEASONAL = "SeasonalListsJson";
         private const string PREF_KEY_HURRICANE = "HurricaneListJson";
         private const string PREF_KEY_TASKS = "TasksJson";
         private const string PREF_KEY_PROPERTY = "PropertyJson";
-        private const string PREF_KEY_KNOWLEDGE = "KnowledgeJson";   // user notes
-        private const string PREF_KEY_ISSUES = "IssuesJson";
+        private const string PREF_KEY_KNOWLEDGE = "KnowledgeJson";      // user notes
+        private const string PREF_KEY_ISSUES = "IssuesJson";         // active issues
+        private const string PREF_KEY_ISSUES_HISTORY = "IssuesHistoryJson";  // resolved issues history
 
         public MaintenanceManager()
         {
@@ -56,8 +60,9 @@ namespace HomeMaintenanceApp.Services
             LoadPropertyFromPreferences();
             LoadListsFromPreferences();
             LoadTasksFromPreferences();
-            LoadKnowledgeFromPreferences(); // user notes
+            LoadKnowledgeFromPreferences();    // user notes
             LoadIssuesFromPreferences();
+            LoadIssuesHistoryFromPreferences();
 
             // ------------------ Seed demo appliance/tasks --------------------
             if (!Appliances.Any())
@@ -87,6 +92,7 @@ namespace HomeMaintenanceApp.Services
                 }
             }
 
+            // ✅ Keep a sample issue to help new users (only added if none exist)
             if (!Issues.Any())
             {
                 Issues.Add(new IssueRecord
@@ -142,10 +148,10 @@ namespace HomeMaintenanceApp.Services
                 HurricaneChecklist.Add("Verify evacuation routes & contacts");
             }
 
-            // Monthly housekeeping
+            // Monthly housekeeping tasks
             SeedMonthlyHousekeepingIfMissing();
 
-            // Pool (Seasonal tab)
+            // Pool checklist (Seasonal tab)
             SeedPoolChecklistIfMissing();
 
             // ------------------ Knowledge: Basic Tools (seeded view) ----------
@@ -192,6 +198,7 @@ namespace HomeMaintenanceApp.Services
             SaveTasksToPreferences();
             SaveKnowledgeToPreferences();   // user notes
             SaveIssuesToPreferences();
+            SaveIssuesHistoryToPreferences();
         }
 
         // -------------------------- Tasks CRUD -------------------------------
@@ -256,7 +263,7 @@ namespace HomeMaintenanceApp.Services
         public ObservableCollection<MaintenanceTask> GetTasksByStatus(ModelsTaskStatus status)
             => new(Tasks.Where(t => t.Status == status));
 
-        // -------------------------- Issues CRUD ------------------------------
+        // -------------------------- Issues CRUD + History --------------------
         public void AddIssue(IssueRecord issue)
         {
             Issues.Add(issue);
@@ -266,7 +273,12 @@ namespace HomeMaintenanceApp.Services
         public void UpdateIssue(IssueRecord updated)
         {
             var existing = Issues.FirstOrDefault(i => i.Id == updated.Id);
-            if (existing is null) return;
+            if (existing is null)
+            {
+                // If it's in history, allow edits there too
+                existing = IssuesHistory.FirstOrDefault(i => i.Id == updated.Id);
+                if (existing is null) return;
+            }
 
             existing.Title = updated.Title;
             existing.Description = updated.Description;
@@ -278,17 +290,46 @@ namespace HomeMaintenanceApp.Services
             existing.RelatedTaskId = updated.RelatedTaskId;
 
             SaveIssuesToPreferences();
+            SaveIssuesHistoryToPreferences();
         }
 
         public void DeleteIssue(Guid id)
         {
             var existing = Issues.FirstOrDefault(i => i.Id == id);
-            if (existing is null) return;
-            Issues.Remove(existing);
-            SaveIssuesToPreferences();
+            if (existing is not null)
+            {
+                Issues.Remove(existing);
+                SaveIssuesToPreferences();
+                return;
+            }
+
+            var hist = IssuesHistory.FirstOrDefault(i => i.Id == id);
+            if (hist is not null)
+            {
+                IssuesHistory.Remove(hist);
+                SaveIssuesHistoryToPreferences();
+            }
         }
 
-        public IssueRecord? GetIssue(Guid id) => Issues.FirstOrDefault(i => i.Id == id);
+        public IssueRecord? GetIssue(Guid id)
+            => Issues.FirstOrDefault(i => i.Id == id) ?? IssuesHistory.FirstOrDefault(i => i.Id == id);
+
+        /// <summary>
+        /// Mark resolved and move from Active Issues to IssuesHistory.
+        /// </summary>
+        public void ResolveIssue(Guid id)
+        {
+            var issue = Issues.FirstOrDefault(i => i.Id == id);
+            if (issue is null) return;
+
+            issue.Resolved = true;
+
+            Issues.Remove(issue);
+            IssuesHistory.Add(issue);
+
+            SaveIssuesToPreferences();
+            SaveIssuesHistoryToPreferences();
+        }
 
         // -------------------------- Appliances CRUD --------------------------
         public void AddAppliance(Appliance appliance) => Appliances.Add(appliance);
@@ -556,6 +597,31 @@ namespace HomeMaintenanceApp.Services
                 var list = Issues.ToList();
                 var json = JsonSerializer.Serialize(list);
                 Preferences.Set(PREF_KEY_ISSUES, json);
+            }
+            catch { /* swallow */ }
+        }
+
+        public void LoadIssuesHistoryFromPreferences()
+        {
+            try
+            {
+                var json = Preferences.Get(PREF_KEY_ISSUES_HISTORY, string.Empty);
+                if (string.IsNullOrWhiteSpace(json)) return;
+
+                var list = JsonSerializer.Deserialize<List<IssueRecord>>(json) ?? new List<IssueRecord>();
+                IssuesHistory.Clear();
+                foreach (var i in list) IssuesHistory.Add(i);
+            }
+            catch { /* swallow */ }
+        }
+
+        public void SaveIssuesHistoryToPreferences()
+        {
+            try
+            {
+                var list = IssuesHistory.ToList();
+                var json = JsonSerializer.Serialize(list);
+                Preferences.Set(PREF_KEY_ISSUES_HISTORY, json);
             }
             catch { /* swallow */ }
         }
