@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HomeMaintenanceApp.Pages.SeasonalPage"
+             Title="Seasonal Maintenance">
+
+    <VerticalStackLayout Padding="12" Spacing="8" BackgroundColor="#101820">
+
+        <!-- Season toggle buttons -->
+        <Grid ColumnDefinitions="*,*,*,*,*">
+            <Button x:Name="SpringBtn" Text="🌱 Spring"  Clicked="OnSpring" />
+            <Button Grid.Column="1" x:Name="SummerBtn" Text="☀️ Summer"  Clicked="OnSummer" />
+            <Button Grid.Column="2" x:Name="AutumnBtn" Text="🍂 Autumn"  Clicked="OnAutumn" />
+            <Button Grid.Column="3" x:Name="WinterBtn" Text="❄️ Winter"  Clicked="OnWinter" />
+            <!-- ✅ Pool tab -->
+            <Button Grid.Column="4" x:Name="PoolBtn"   Text="🏊 Pool"    Clicked="OnPool" />
+        </Grid>
+
+        <!-- Add item -->
+        <Border BackgroundColor="#1F2937" Stroke="#334155">
+            <Grid ColumnDefinitions="*,Auto" Padding="12">
+                <Entry x:Name="NewItemEntry" Placeholder="Add a checklist item..." HorizontalOptions="Fill"/>
+                <Button Grid.Column="1" Text="Add" Clicked="OnAddItem"/>
+            </Grid>
+        </Border>
+
+        <!-- Checklist list -->
+        <CollectionView x:Name="SeasonList" BackgroundColor="#0f1d2f">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid ColumnDefinitions="Auto,*" Padding="6">
+                        <CheckBox />
+                        <Label Grid.Column="1" Text="{Binding}" TextColor="White"/>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </VerticalStackLayout>
+</ContentPage>

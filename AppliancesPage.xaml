@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HomeMaintenanceApp.Pages.AppliancesPage"
+             Title="Appliances">
+
+    <Grid RowDefinitions="Auto,Auto,*" Padding="12" BackgroundColor="#101820">
+
+        <!-- Header row -->
+        <HorizontalStackLayout Grid.Row="0" Spacing="8">
+            <Button Text="Add Appliance" Clicked="OnAddApplianceClicked" />
+        </HorizontalStackLayout>
+
+        <!-- Add form (Border to avoid Frame obsolete warnings) -->
+        <Border Grid.Row="1" x:Name="AddForm"
+                BackgroundColor="#1F2937" Stroke="#334155"
+                Margin="0,8,0,8" IsVisible="False">
+
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                  ColumnDefinitions="Auto,*" Padding="12"
+                  ColumnSpacing="12" RowSpacing="10">
+
+                <Label Grid.Row="0" Grid.Column="0" Text="Name" TextColor="White"/>
+                <Entry  Grid.Row="0" Grid.Column="1" x:Name="NameEntry" Placeholder="LG Refrigerator" />
+
+                <Label Grid.Row="1" Grid.Column="0" Text="Type" TextColor="White"/>
+                <Picker Grid.Row="1" Grid.Column="1" x:Name="TypePicker">
+                    <Picker.Items>
+                        <x:String>HVAC</x:String>
+                        <x:String>Plumbing</x:String>
+                        <x:String>Electrical</x:String>
+                        <x:String>Kitchen</x:String>
+                        <x:String>Laundry</x:String>
+                        <x:String>Other</x:String>
+                    </Picker.Items>
+                </Picker>
+
+                <Label Grid.Row="2" Grid.Column="0" Text="Manufacturer" TextColor="White"/>
+                <Entry  Grid.Row="2" Grid.Column="1" x:Name="ManufacturerEntry" Placeholder="LG" />
+
+                <Label Grid.Row="3" Grid.Column="0" Text="Model" TextColor="White"/>
+                <Entry  Grid.Row="3" Grid.Column="1" x:Name="ModelEntry" Placeholder="LSXS26326S" />
+
+                <Label Grid.Row="4" Grid.Column="0" Text="Serial #" TextColor="White"/>
+                <Entry  Grid.Row="4" Grid.Column="1" x:Name="SerialEntry" Placeholder="ABC1234567" />
+
+                <Label Grid.Row="5" Grid.Column="0" Text="Location" TextColor="White"/>
+                <Entry  Grid.Row="5" Grid.Column="1" x:Name="LocationEntry" Placeholder="Kitchen / Garage / Attic" />
+
+                <Label Grid.Row="6" Grid.Column="0" Text="Install date" TextColor="White"/>
+                <DatePicker Grid.Row="6" Grid.Column="1" x:Name="InstallDatePicker" />
+
+                <Label Grid.Row="7" Grid.Column="0" Text="Last filter change" TextColor="White"/>
+                <DatePicker Grid.Row="7" Grid.Column="1" x:Name="LastFilterDatePicker" />
+
+                <HorizontalStackLayout Grid.Row="8" Grid.ColumnSpan="2" Spacing="8" HorizontalOptions="End">
+                    <Button Text="Save" Clicked="OnSaveApplianceClicked" />
+                    <Button Text="Cancel" Clicked="OnCancelApplianceClicked" />
+                </HorizontalStackLayout>
+            </Grid>
+        </Border>
+
+        <!-- Appliance list -->
+        <CollectionView Grid.Row="2" x:Name="ApplianceList" BackgroundColor="#0f1d2f">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="10" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+
+                        <Label Grid.Row="0" Grid.Column="0"
+                               Text="{Binding Name}" TextColor="White" FontAttributes="Bold"/>
+                        <Label Grid.Row="0" Grid.Column="1"
+                               Text="{Binding Type}" TextColor="#93c5fd" HorizontalTextAlignment="End"/>
+
+                        <Label Grid.Row="1" Grid.Column="0"
+                               Text="{Binding Manufacturer, StringFormat='Manufacturer: {0}'}"
+                               TextColor="#e5e7eb" />
+                        <Label Grid.Row="1" Grid.Column="1"
+                               Text="{Binding SerialNumber, StringFormat='Serial: {0}'}"
+                               TextColor="#e5e7eb" HorizontalTextAlignment="End"/>
+
+                        <Label Grid.Row="2" Grid.Column="0"
+                               Text="{Binding Location, StringFormat='Location: {0}'}"
+                               TextColor="#e5e7eb" />
+                        <Label Grid.Row="2" Grid.Column="1"
+                               Text="{Binding LastFilterChangeDate, StringFormat='Last Filter: {0:d}'}"
+                               TextColor="#e5e7eb" HorizontalTextAlignment="End"/>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+    </Grid>
+</ContentPage>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HomeMaintenanceApp.Pages.TaskPage"
+             Title="Tasks">
+
+    <Grid RowDefinitions="Auto,*" Padding="12" BackgroundColor="#101820">
+
+        <!-- Header & Add -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
+            <Label Text="Tasks" FontSize="22" FontAttributes="Bold" TextColor="White"/>
+            <Button Text="Add Task" Grid.Column="1" HorizontalOptions="End" Clicked="OnAddTaskClicked" />
+        </Grid>
+
+        <!-- Task list (editable in-place) -->
+        <CollectionView Grid.Row="1" x:Name="TaskList" BackgroundColor="#0f1d2f" SelectionMode="None">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+
+                    <!-- Swipe: Complete / Edit / Delete -->
+                    <SwipeView>
+                        <SwipeView.RightItems>
+                            <SwipeItems Mode="Reveal">
+                                <SwipeItem Text="Complete" BackgroundColor="#10b981" Invoked="OnCompleteSwipe" />
+                                <SwipeItem Text="Delete"   BackgroundColor="#ef4444" Invoked="OnDeleteSwipe" />
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+
+                        <!-- Row layout -->
+                        <Grid Padding="10" ColumnSpacing="12"
+                              ColumnDefinitions="2*,Auto,Auto,Auto"
+                              RowDefinitions="Auto,Auto">
+
+                            <!-- Title & Description -->
+                            <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="2">
+                                <Label Text="{Binding Title}" TextColor="White" FontAttributes="Bold" />
+                                <Label Text="{Binding Description}" TextColor="#e5e7eb" FontSize="12" />
+                            </VerticalStackLayout>
+
+                            <!-- Priority (inline picker) -->
+                            <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="2" HorizontalOptions="Center">
+                                <Label Text="Priority" TextColor="#93c5fd" FontSize="12" />
+                                <Picker Title="Priority"
+                                        WidthRequest="120"
+                                        SelectedIndexChanged="OnPriorityChanged">
+                                    <Picker.Items>
+                                        <x:String>Low</x:String>
+                                        <x:String>Medium</x:String>
+                                        <x:String>High</x:String>
+                                        <x:String>Critical</x:String>
+                                    </Picker.Items>
+                                </Picker>
+                            </VerticalStackLayout>
+
+                            <!-- Status (inline picker) -->
+                            <VerticalStackLayout Grid.Row="0" Grid.Column="2" Spacing="2" HorizontalOptions="Center">
+                                <Label Text="Status" TextColor="#93c5fd" FontSize="12" />
+                                <Picker Title="Status"
+                                        WidthRequest="130"
+                                        SelectedIndexChanged="OnStatusChanged">
+                                    <Picker.Items>
+                                        <x:String>NotStarted</x:String>
+                                        <x:String>InProgress</x:String>
+                                        <x:String>Completed</x:String>
+                                        <x:String>Deferred</x:String>
+                                    </Picker.Items>
+                                </Picker>
+                            </VerticalStackLayout>
+
+                            <!-- Due date -->
+                            <VerticalStackLayout Grid.Row="0" Grid.Column="3" Spacing="2" HorizontalOptions="End">
+                                <Label Text="Due" TextColor="#93c5fd" FontSize="12" HorizontalTextAlignment="End" />
+                                <DatePicker Date="{Binding DueDate}" DateSelected="OnDueDateSelected" />
+                            </VerticalStackLayout>
+
+                            <!-- Row actions (Start / Done) -->
+                            <HorizontalStackLayout Grid.Row="1" Grid.ColumnSpan="4" Spacing="8">
+                                <Button Text="Start"
+                                        BackgroundColor="#3b82f6"
+                                        TextColor="White"
+                                        Clicked="OnStartClicked" />
+
+                                <Button Text="Done"
+                                        BackgroundColor="#10b981"
+                                        TextColor="White"
+                                        Clicked="OnDoneClicked" />
+
+                                <!-- Show recurrence & next due hint -->
+                                <Label Text="{Binding Recurrence}"
+                                       TextColor="#e5e7eb"
+                                       FontSize="12"
+                                       HorizontalOptions="EndAndExpand" />
+                            </HorizontalStackLayout>
+
+                        </Grid>
+                    </SwipeView>
+
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HomeMaintenanceApp.Pages.OnboardingPage"
+             Title="Welcome">
+
+    <VerticalStackLayout Padding="16" Spacing="12">
+
+        <Label Text="Set up your property" FontSize="22" FontAttributes="Bold" />
+
+        <Label Text="Property Address" />
+        <Entry x:Name="AddressEntry" Placeholder="123 Main St, City, ST" />
+
+        <Grid ColumnDefinitions="*,Auto" Padding="0,8,0,0">
+            <Label Text="Does this property have a pool?" VerticalOptions="Center" />
+            <Switch x:Name="PoolSwitch" Grid.Column="1" />
+        </Grid>
+
+        <!-- NEW: Trash day picker -->
+        <Label Text="When is trash day?" />
+        <Picker x:Name="TrashDayPicker">
+            <Picker.Items>
+                <x:String>Sunday</x:String>
+                <x:String>Monday</x:String>
+                <x:String>Tuesday</x:String>
+                <x:String>Wednesday</x:String>
+                <x:String>Thursday</x:String>
+                <x:String>Friday</x:String>
+                <x:String>Saturday</x:String>
+            </Picker.Items>
+        </Picker>
+
+        <Button Text="Continue" Clicked="OnContinueClicked" />
+
+    </VerticalStackLayout>
+</ContentPage>

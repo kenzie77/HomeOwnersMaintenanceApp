@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HomeMaintenanceApp.Pages.KnowledgePage"
+             Title="Knowledge">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="12" Spacing="12" BackgroundColor="#101820">
+
+            <!-- Header -->
+            <Grid ColumnDefinitions="Auto,*">
+                <Label Text="Knowledge" FontSize="22" FontAttributes="Bold" TextColor="White"/>
+                <Label Grid.Column="1" Text="Guides • Tips • Resources"
+                       TextColor="#93c5fd"
+                       HorizontalTextAlignment="End"/>
+            </Grid>
+
+            <!-- Expected Useful Life -->
+            <Border BackgroundColor="#1F2937" Stroke="#334155">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="8"/>
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Padding="10" Spacing="8">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Label Text="Expected Useful Life" FontAttributes="Bold" TextColor="White"/>
+                        <Label Grid.Column="1" Text="Reference chart (typical ranges)"
+                               TextColor="#93c5fd" HorizontalTextAlignment="End"/>
+                    </Grid>
+
+                    <CollectionView x:Name="UsefulLifeList" BackgroundColor="#0f1d2f">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="8" ColumnDefinitions="2*,Auto">
+                                    <Label Text="{Binding Item}" TextColor="White"/>
+                                    <Label Grid.Column="1"
+                                           Text="{Binding Life}"
+                                           TextColor="#e5e7eb"
+                                           HorizontalTextAlignment="End"/>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <Label Text="These ranges are general guidelines. Actual lifespan varies by brand, usage, maintenance, and environment."
+                           TextColor="#9ca3af" FontSize="12"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Basic Tools -->
+            <Border BackgroundColor="#1F2937" Stroke="#334155">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="8"/>
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Padding="10" Spacing="8">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Label Text="Basic Tools" FontAttributes="Bold" TextColor="White"/>
+                        <Label Grid.Column="1" Text="Starter list"
+                               TextColor="#93c5fd" HorizontalTextAlignment="End"/>
+                    </Grid>
+
+                    <CollectionView x:Name="ToolsList" BackgroundColor="#0f1d2f">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="8">
+                                    <Label Text="{Binding}" TextColor="White"/>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Your Notes (user-addable) -->
+            <Border BackgroundColor="#1F2937" Stroke="#334155">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="8"/>
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Padding="10" Spacing="8">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Label Text="Your Notes" FontAttributes="Bold" TextColor="White"/>
+                        <Label Grid.Column="1" Text="Add guides, tips, links"
+                               TextColor="#93c5fd" HorizontalTextAlignment="End"/>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,Auto" Padding="0,8,0,8">
+                        <Entry x:Name="NewKnowledgeEntry"
+                               Placeholder="Add a guide, tip, or resource..."
+                               TextColor="White"
+                               BackgroundColor="#0f1d2f" />
+                        <Button Grid.Column="1" Text="Add"
+                                Clicked="OnAddKnowledgeClicked"/>
+                    </Grid>
+
+                    <CollectionView x:Name="KnowledgeList" BackgroundColor="#0f1d2f">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <SwipeView>
+                                    <SwipeView.RightItems>
+                                        <SwipeItems Mode="Reveal">
+                                            <SwipeItem Text="Delete"
+                                                       BackgroundColor="#ef4444"
+                                                       Invoked="OnDeleteKnowledgeSwipe" />
+                                        </SwipeItems>
+                                    </SwipeView.RightItems>
+
+                                    <Grid Padding="8">
+                                        <Label Text="{Binding}" TextColor="White" />
+                                    </Grid>
+                                </SwipeView>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

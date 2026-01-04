@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:pages="clr-namespace:HomeMaintenanceApp.Pages"
+       x:Class="HomeMaintenanceApp.AppShell"
+       Shell.NavBarIsVisible="True">
+
+    <!-- Left-side nav -->
+    <Shell.FlyoutBehavior>Locked</Shell.FlyoutBehavior>
+
+    <FlyoutItem Title="Welcome" Route="Onboarding" Icon="welcome.png">
+        <ShellContent Title="Welcome">
+            <pages:OnboardingPage />
+        </ShellContent>
+    </FlyoutItem>
+
+    <FlyoutItem Title="Home" Route="Home" Icon="home.png">
+        <ShellContent Title="Home">
+            <pages:HomePage />
+        </ShellContent>
+    </FlyoutItem>
+
+    <FlyoutItem Title="Tasks" Route="Tasks" Icon="tasks.png">
+        <ShellContent Title="Tasks">
+            <pages:TaskPage />
+        </ShellContent>
+    </FlyoutItem>
+
+    <FlyoutItem Title="Appliances" Route="Appliances" Icon="appliances.png">
+        <ShellContent Title="Appliances">
+            <pages:AppliancesPage />
+        </ShellContent>
+    </FlyoutItem>
+
+    <FlyoutItem Title="Issues" Route="Issues" Icon="issues.png">
+        <ShellContent Title="Issues">
+            <pages:IssuesPage />
+        </ShellContent>
+    </FlyoutItem>
+
+    <FlyoutItem Title="Knowledge" Route="Knowledge" Icon="knowledge.png">
+        <ShellContent Title="Knowledge">
+            <pages:KnowledgePage />
+        </ShellContent>
+    </FlyoutItem>
+
+    <FlyoutItem Title="Seasonal" Route="Seasonal" Icon="seasonal.png">
+        <ShellContent Title="Seasonal">
+            <pages:SeasonalPage />
+        </ShellContent>
+    </FlyoutItem>
+
+    <FlyoutItem Title="Hurricane" Route="Hurricane" Icon="hurricane.png">
+        <ShellContent Title="Hurricane">
+            <pages:HurricanePage />
+        </ShellContent>
+    </FlyoutItem>
+</Shell>

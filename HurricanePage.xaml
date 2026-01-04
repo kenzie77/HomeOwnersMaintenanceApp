@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HomeMaintenanceApp.Pages.HurricanePage"
+             Title="Hurricane Prep">
+
+    <VerticalStackLayout Padding="12" Spacing="8" BackgroundColor="#101820">
+        <Label Text="Hurricane preparedness checklist"
+               FontSize="20" FontAttributes="Bold" TextColor="White"/>
+
+        <HorizontalStackLayout Spacing="8">
+            <Entry x:Name="NewHItemEntry"
+                   Placeholder="Add a checklist item..."
+                   HorizontalOptions="FillAndExpand"/>
+            <Button Text="Add" Clicked="OnAddHItem"/>
+        </HorizontalStackLayout>
+
+        <CollectionView x:Name="HList" BackgroundColor="#1F2937">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid ColumnDefinitions="Auto,*" Padding="6">
+                        <CheckBox />
+                        <Label Grid.Column="1" Text="{Binding}" TextColor="White"/>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </VerticalStackLayout>
+</ContentPage>

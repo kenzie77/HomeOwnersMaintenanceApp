@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HomeMaintenanceApp.Pages.IssuesPage"
+             Title="Issues">
+
+    <Grid RowDefinitions="Auto,*" Padding="12" BackgroundColor="#101820">
+
+        <!-- Header & Add -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
+            <Label Text="Issues" FontSize="22" FontAttributes="Bold" TextColor="White"/>
+            <Button Text="Add Issue" Grid.Column="1" HorizontalOptions="End" Clicked="OnAddIssueClicked" />
+        </Grid>
+
+        <!-- Issue list (editable inline) -->
+        <CollectionView Grid.Row="1" x:Name="IssuesView" BackgroundColor="#0f1d2f" SelectionMode="None">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+
+                    <SwipeView>
+                        <SwipeView.RightItems>
+                            <SwipeItems Mode="Reveal">
+                                <SwipeItem Text="Resolve" BackgroundColor="#10b981" Invoked="OnResolveSwipe" />
+                                <SwipeItem Text="Delete"  BackgroundColor="#ef4444" Invoked="OnDeleteSwipe" />
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+
+                        <!-- Row layout -->
+                        <Grid Padding="10" ColumnSpacing="12"
+                              ColumnDefinitions="2*,Auto,Auto"
+                              RowDefinitions="Auto,Auto,Auto,Auto">
+
+                            <!-- Title (Entry) & Description (Editor) -->
+                            <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
+                                <!-- TITLE: user can type the issue name -->
+                                <Entry x:Name="TitleEntry"
+                                       Text="{Binding Title}"
+                                       Placeholder="Enter issue title (e.g., Dishwasher leak)"
+                                       TextColor="White"
+                                       Completed="OnTitleCompleted" />
+
+                                <!-- DESCRIPTION: short summary -->
+                                <Editor x:Name="DescEditor"
+                                        Text="{Binding Description}"
+                                        TextColor="White"
+                                        Placeholder="Describe the issue..."
+                                        Completed="OnDescriptionCompleted" />
+                            </VerticalStackLayout>
+
+                            <!-- Severity (inline picker) -->
+                            <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="2" HorizontalOptions="Center">
+                                <Label Text="Severity" TextColor="#93c5fd" FontSize="12" />
+                                <Picker Title="Severity"
+                                        WidthRequest="120"
+                                        SelectedIndexChanged="OnSeverityChanged">
+                                    <Picker.Items>
+                                        <x:String>Minor</x:String>
+                                        <x:String>Moderate</x:String>
+                                        <x:String>Major</x:String>
+                                        <x:String>Critical</x:String>
+                                    </Picker.Items>
+                                </Picker>
+                            </VerticalStackLayout>
+
+                            <!-- Resolved checkbox -->
+                            <VerticalStackLayout Grid.Row="0" Grid.Column="2" Spacing="2" HorizontalOptions="End">
+                                <Label Text="Resolved" TextColor="#93c5fd" FontSize="12" HorizontalTextAlignment="End" />
+                                <CheckBox IsChecked="{Binding Resolved}" CheckedChanged="OnResolvedCheckedChanged" />
+                            </VerticalStackLayout>
+
+                            <!-- Attempted steps -->
+                            <VerticalStackLayout Grid.Row="2" Grid.ColumnSpan="3" Spacing="2">
+                                <Label Text="Steps you tried before calling a pro:" TextColor="#93c5fd" FontSize="12" />
+                                <Editor x:Name="AttemptedEditor"
+                                        Text="{Binding AttemptedSteps}"
+                                        TextColor="White"
+                                        Placeholder="e.g., reset GFCI, checked breaker, cleaned trap..."
+                                        Completed="OnAttemptedCompleted" />
+                            </VerticalStackLayout>
+
+                            <!-- Fix notes -->
+                            <VerticalStackLayout Grid.Row="3" Grid.ColumnSpan="3" Spacing="2">
+                                <Label Text="How it was fixed:" TextColor="#93c5fd" FontSize="12" />
+                                <Editor x:Name="FixEditor"
+                                        Text="{Binding FixNotes}"
+                                        TextColor="White"
+                                        Placeholder="e.g., replaced hose, called plumber..."
+                                        Completed="OnFixNotesCompleted" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </SwipeView>
+
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>
