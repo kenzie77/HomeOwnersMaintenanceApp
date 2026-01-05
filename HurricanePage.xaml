@@ -5,25 +5,126 @@
              Title="Hurricane Prep">
 
     <VerticalStackLayout Padding="12" Spacing="8" BackgroundColor="#101820">
-        <Label Text="Hurricane preparedness checklist"
-               FontSize="20" FontAttributes="Bold" TextColor="White"/>
 
-        <HorizontalStackLayout Spacing="8">
-            <Entry x:Name="NewHItemEntry"
-                   Placeholder="Add a checklist item..."
-                   HorizontalOptions="FillAndExpand"/>
-            <Button Text="Add" Clicked="OnAddHItem"/>
-        </HorizontalStackLayout>
+        <!-- Header + top red delete (Border + Tap gesture) -->
+        <Grid ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center">
+            <Label Text="Hurricane preparedness checklist"
+                   FontSize="20"
+                   FontAttributes="Bold"
+                   TextColor="White"/>
 
-        <CollectionView x:Name="HList" BackgroundColor="#1F2937">
+            <Label Grid.Column="1"
+                   Text="Add • Edit • Delete"
+                   TextColor="#93c5fd"
+                   HorizontalTextAlignment="Center"
+                   VerticalTextAlignment="Center"/>
+
+            <!-- RED Delete Selected faux-button -->
+            <Border Grid.Column="2"
+                    x:Name="DeleteSelectedPanel"
+                    BackgroundColor="#ef4444"
+                    Stroke="#ef4444"
+                    Padding="10,6"
+                    StrokeThickness="1"
+                    HorizontalOptions="End"
+                    VerticalOptions="Center">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="6"/>
+                </Border.StrokeShape>
+                <HorizontalStackLayout Spacing="6">
+                    <!-- Optional icon; if trash.png not present, only text will show -->
+                    <Image Source="trash.png"
+                           HeightRequest="18"
+                           WidthRequest="18"
+                           Aspect="AspectFit"/>
+                    <Label Text="Delete Selected"
+                           TextColor="White"
+                           FontAttributes="Bold"/>
+                </HorizontalStackLayout>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnDeleteSelectedTapped"/>
+                </Border.GestureRecognizers>
+            </Border>
+        </Grid>
+
+        <!-- Add new item row -->
+        <Border BackgroundColor="#1F2937" Stroke="#334155">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="8"/>
+            </Border.StrokeShape>
+
+            <Grid ColumnDefinitions="*,Auto" Padding="12">
+                <Entry x:Name="NewHItemEntry"
+                       Placeholder="Add a checklist item..."
+                       TextColor="White"
+                       BackgroundColor="#0f1d2f"
+                       HorizontalOptions="Fill"/>
+                <Button Grid.Column="1"
+                        Text="Add"
+                        Clicked="OnAddHItem"/>
+            </Grid>
+        </Border>
+
+        <!-- Checklist list -->
+        <CollectionView x:Name="HList"
+                        BackgroundColor="#0f1d2f"
+                        SelectionMode="None"
+                        ItemsLayout="VerticalList">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Grid ColumnDefinitions="Auto,*" Padding="6">
-                        <CheckBox />
-                        <Label Grid.Column="1" Text="{Binding}" TextColor="White"/>
-                    </Grid>
+
+                    <SwipeView>
+                        <SwipeView.RightItems>
+                            <SwipeItems Mode="Reveal">
+                                <!-- Edit item -->
+                                <SwipeItem Text="Edit"
+                                           BackgroundColor="#3b82f6"
+                                           Invoked="OnEditSwipe"/>
+                                <!-- Delete item -->
+                                <SwipeItem Text="Delete"
+                                           BackgroundColor="#ef4444"
+                                           Invoked="OnDeleteSwipe"/>
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+
+                        <!-- Row -->
+                        <Grid Padding="10"
+                              ColumnDefinitions="Auto,*,Auto"
+                              ColumnSpacing="12">
+
+                            <!-- Check to select for top deletion -->
+                            <CheckBox IsChecked="{Binding IsSelected}"
+                                      CheckedChanged="OnRowSelectedChanged" />
+
+                            <!-- Tap to edit -->
+                            <Label Grid.Column="1"
+                                   Text="{Binding Text}"
+                                   TextColor="White">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnRowTapped"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+
+                            <!-- Per-row red Delete button (single delete) -->
+                            <Button Grid.Column="2"
+                                    BackgroundColor="#ef4444"
+                                    TextColor="White"
+                                    Padding="10,6"
+                                    CornerRadius="6"
+                                    Text="Delete"
+                                    Clicked="OnDeleteRowClicked"
+                                    HorizontalOptions="End"
+                                    VerticalOptions="Center"/>
+                        </Grid>
+                    </SwipeView>
+
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+
+        <!-- Tip -->
+        <Label Text="Tip: Check items then tap the red Delete Selected button; tap text to edit; swipe → Edit/Delete; per-row red Delete removes one."
+               TextColor="#9ca3af"
+               FontSize="12"/>
     </VerticalStackLayout>
 </ContentPage>

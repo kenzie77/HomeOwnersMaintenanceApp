@@ -17,7 +17,7 @@
             <CollectionView.ItemTemplate>
                 <DataTemplate>
 
-                    <!-- Swipe: Complete / Edit / Delete -->
+                    <!-- Swipe: Complete / Delete -->
                     <SwipeView>
                         <SwipeView.RightItems>
                             <SwipeItems Mode="Reveal">
@@ -29,7 +29,7 @@
                         <!-- Row layout -->
                         <Grid Padding="10" ColumnSpacing="12"
                               ColumnDefinitions="2*,Auto,Auto,Auto"
-                              RowDefinitions="Auto,Auto">
+                              RowDefinitions="Auto,Auto,Auto">
 
                             <!-- Title & Description -->
                             <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="2">
@@ -73,7 +73,7 @@
                                 <DatePicker Date="{Binding DueDate}" DateSelected="OnDueDateSelected" />
                             </VerticalStackLayout>
 
-                            <!-- Row actions (Start / Done) -->
+                            <!-- Row actions (Start / Done + hints) -->
                             <HorizontalStackLayout Grid.Row="1" Grid.ColumnSpan="4" Spacing="8">
                                 <Button Text="Start"
                                         BackgroundColor="#3b82f6"
@@ -85,12 +85,32 @@
                                         TextColor="White"
                                         Clicked="OnDoneClicked" />
 
-                                <!-- Show recurrence & next due hint -->
+                                <!-- Recurrence + next due hint -->
                                 <Label Text="{Binding Recurrence}"
                                        TextColor="#e5e7eb"
                                        FontSize="12"
+                                       HorizontalOptions="Start" />
+
+                                <Label Text="{Binding DueDate, StringFormat='Next due: {0:MMM d, yyyy}'}"
+                                       TextColor="#cbd5e1"
+                                       FontSize="12"
                                        HorizontalOptions="EndAndExpand" />
                             </HorizontalStackLayout>
+
+                            <!-- Completed date line -->
+                            <Label Grid.Row="2" Grid.ColumnSpan="4"
+                                   Text="{Binding LastCompletedOn, StringFormat='Completed: {0:MMM d, yyyy}'}"
+                                   TextColor="#93c5fd"
+                                   FontSize="12">
+                                <Label.Triggers>
+                                    <!-- Hide when LastCompletedOn is null -->
+                                    <DataTrigger TargetType="Label"
+                                                 Binding="{Binding LastCompletedOn}"
+                                                 Value="{x:Null}">
+                                        <Setter Property="IsVisible" Value="False" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
 
                         </Grid>
                     </SwipeView>

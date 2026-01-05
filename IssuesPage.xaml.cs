@@ -1,6 +1,9 @@
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Graphics;
 using HomeMaintenanceApp.Models;
 using HomeMaintenanceApp.Services;
 
@@ -9,6 +12,9 @@ namespace HomeMaintenanceApp.Pages
     public partial class IssuesPage : ContentPage
     {
         private readonly MaintenanceManager _manager;
+        private readonly HashSet<Guid> _selectedHistoryIds = new(); // for bulk delete
+
+        private bool _showingHistory = false;
 
         public IssuesPage()
         {
@@ -16,36 +22,53 @@ namespace HomeMaintenanceApp.Pages
 
             _manager = new MaintenanceManager();
 
+            // Load persisted issues
             _manager.LoadIssuesFromPreferences();
             _manager.LoadIssuesHistoryFromPreferences();
+
+            // Bind
+            ActiveList.ItemsSource = _manager.Issues;
+            HistoryList.ItemsSource = _manager.IssuesHistory;
 
             ShowActive();
         }
 
+        // -------- Tabs --------
         private void ShowActive()
         {
-            IssuesView.ItemsSource = _manager.Issues;
+            _showingHistory = false;
 
-            ActiveBtn.BackgroundColor = Colors.SteelBlue;
-            ActiveBtn.TextColor = Colors.White;
-            HistoryBtn.BackgroundColor = Colors.Transparent;
-            HistoryBtn.TextColor = Colors.White;
+            ActiveList.IsVisible = true;
+            HistoryList.IsVisible = false;
+            HistoryDeleteBar.IsVisible = false;
+            _selectedHistoryIds.Clear();
+
+            ActiveTabBtn.BackgroundColor = Colors.SteelBlue;
+            ActiveTabBtn.TextColor = Colors.White;
+            HistoryTabBtn.BackgroundColor = Colors.Transparent;
+            HistoryTabBtn.TextColor = Colors.White;
         }
 
         private void ShowHistory()
         {
-            IssuesView.ItemsSource = _manager.IssuesHistory;
+            _showingHistory = true;
 
-            HistoryBtn.BackgroundColor = Colors.SteelBlue;
-            HistoryBtn.TextColor = Colors.White;
-            ActiveBtn.BackgroundColor = Colors.Transparent;
-            ActiveBtn.TextColor = Colors.White;
+            ActiveList.IsVisible = false;
+            HistoryList.IsVisible = true;
+            HistoryDeleteBar.IsVisible = true;
+            _selectedHistoryIds.Clear();
+            UpdateHistoryDeleteBarEnabled();
+
+            HistoryTabBtn.BackgroundColor = Colors.SteelBlue;
+            HistoryTabBtn.TextColor = Colors.White;
+            ActiveTabBtn.BackgroundColor = Colors.Transparent;
+            ActiveTabBtn.TextColor = Colors.White;
         }
 
         private void OnShowActive(object sender, EventArgs e) => ShowActive();
         private void OnShowHistory(object sender, EventArgs e) => ShowHistory();
 
-        // ------------------ Add ------------------
+        // -------- Add --------
         private void OnAddIssueClicked(object sender, EventArgs e)
         {
             var issue = new IssueRecord
@@ -54,17 +77,19 @@ namespace HomeMaintenanceApp.Pages
                 Description = "",
                 Severity = IssueSeverity.Minor,
                 Resolved = false,
+                ResolvedOn = null,
                 ReportedOn = DateTime.Now,
                 AttemptedSteps = "",
                 FixNotes = ""
             };
+
             _manager.AddIssue(issue);
 
-            // Ensure user sees it in Active
+            // Always show new issues in Active
             ShowActive();
         }
 
-        // ------------------ Inline edits ------------------
+        // -------- Inline edits (Active) --------
         private void OnTitleCompleted(object sender, EventArgs e)
         {
             if (sender is Entry entry && entry.BindingContext is IssueRecord issue)
@@ -109,15 +134,18 @@ namespace HomeMaintenanceApp.Pages
         {
             if (sender is CheckBox cb && cb.BindingContext is IssueRecord issue)
             {
-                if (e.Value == true)
+                if (e.Value)
                 {
+                    // Resolve: stamp date, move to history, persist
                     _manager.ResolveIssue(issue.Id);
-                    ShowActive(); // refresh Active list since the item moved to History
+                    ShowHistory();
                 }
                 else
                 {
-                    // If you ever want "unresolve" behavior, you can move it back;
-                    // For now we keep History strict.
+                    // Unresolve in Active (if you allow it)
+                    issue.Resolved = false;
+                    issue.ResolvedOn = null;
+                    _manager.UpdateIssue(issue);
                 }
             }
         }
@@ -140,28 +168,109 @@ namespace HomeMaintenanceApp.Pages
             }
         }
 
-        // ------------------ Swipe actions ------------------
+        // -------- Swipe actions (Active) --------
         private void OnResolveSwipe(object sender, EventArgs e)
         {
             if (sender is SwipeItem swipe && swipe.BindingContext is IssueRecord issue)
             {
                 _manager.ResolveIssue(issue.Id);
-                ShowActive();
+                ShowHistory();
             }
         }
 
-        private void OnDeleteSwipe(object sender, EventArgs e)
+        private async void OnDeleteActiveSwipe(object sender, EventArgs e)
         {
             if (sender is SwipeItem swipe && swipe.BindingContext is IssueRecord issue)
             {
-                // Delete from whichever list is currently showing
-                if (IssuesView.ItemsSource == _manager.Issues)
-                    _manager.DeleteIssue(issue.Id);
-                else
-                {
-                    _manager.IssuesHistory.Remove(issue);
-                    _manager.SaveIssuesHistoryToPreferences();
-                }
+                bool confirm = await DisplayAlert("Delete issue",
+                    $"Delete \"{issue.Title}\" from Active?",
+                    "Delete", "Cancel");
+                if (!confirm) return;
+
+                _manager.DeleteIssue(issue.Id);
+            }
+        }
+
+        // ===================== HISTORY AREA =====================
+
+        // Each row has a select checkbox (for bulk delete)
+        private void OnHistorySelectChanged(object sender, CheckedChangedEventArgs e)
+        {
+            if (sender is CheckBox cb && cb.BindingContext is IssueRecord issue)
+            {
+                if (e.Value) _selectedHistoryIds.Add(issue.Id);
+                else _selectedHistoryIds.Remove(issue.Id);
+                UpdateHistoryDeleteBarEnabled();
+            }
+        }
+
+        // Enable/disable top red delete bar
+        private void UpdateHistoryDeleteBarEnabled()
+        {
+            HistoryDeleteBar.Opacity = _selectedHistoryIds.Count > 0 ? 1.0 : 0.4;
+            HistoryDeleteBar.Stroke = _selectedHistoryIds.Count > 0 ? Colors.Red : Colors.DarkRed;
+        }
+
+        // Top: Delete selected (bulk)
+        private async void OnDeleteSelectedHistoryTapped(object sender, EventArgs e)
+        {
+            if (_selectedHistoryIds.Count == 0)
+            {
+                await DisplayAlert("Delete selected", "No items are selected.", "OK");
+                return;
+            }
+
+            bool confirm = await DisplayAlert("Delete selected",
+                $"Delete {_selectedHistoryIds.Count} item(s) from History?",
+                "Delete", "Cancel");
+            if (!confirm) return;
+
+            // Remove selected items from history
+            var toDelete = _manager.IssuesHistory
+                .Where(i => _selectedHistoryIds.Contains(i.Id))
+                .ToList();
+
+            foreach (var item in toDelete)
+                _manager.IssuesHistory.Remove(item);
+
+            _manager.SaveIssuesHistoryToPreferences();
+            _selectedHistoryIds.Clear();
+            UpdateHistoryDeleteBarEnabled();
+        }
+
+        // Per-row Delete button
+        private async void OnDeleteHistoryRowClicked(object sender, EventArgs e)
+        {
+            if (sender is Button btn && btn.BindingContext is IssueRecord issue)
+            {
+                bool confirm = await DisplayAlert("Delete issue",
+                    $"Delete \"{issue.Title}\" from History?",
+                    "Delete", "Cancel");
+                if (!confirm) return;
+
+                _manager.IssuesHistory.Remove(issue);
+                _manager.SaveIssuesHistoryToPreferences();
+
+                _selectedHistoryIds.Remove(issue.Id);
+                UpdateHistoryDeleteBarEnabled();
+            }
+        }
+
+        // Swipe Delete in History
+        private async void OnDeleteHistorySwipe(object sender, EventArgs e)
+        {
+            if (sender is SwipeItem swipe && swipe.BindingContext is IssueRecord issue)
+            {
+                bool confirm = await DisplayAlert("Delete issue",
+                    $"Delete \"{issue.Title}\" from History?",
+                    "Delete", "Cancel");
+                if (!confirm) return;
+
+                _manager.IssuesHistory.Remove(issue);
+                _manager.SaveIssuesHistoryToPreferences();
+
+                _selectedHistoryIds.Remove(issue.Id);
+                UpdateHistoryDeleteBarEnabled();
             }
         }
     }

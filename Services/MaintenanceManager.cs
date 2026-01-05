@@ -21,7 +21,7 @@ namespace HomeMaintenanceApp.Services
         public ObservableCollection<MaintenanceTask> Tasks { get; } = new();
         public ObservableCollection<Appliance> Appliances { get; } = new();
 
-        // Active issues & History of resolved issues
+        // Issues: Active + History (resolved)
         public ObservableCollection<IssueRecord> Issues { get; } = new();
         public ObservableCollection<IssueRecord> IssuesHistory { get; } = new();
 
@@ -38,29 +38,33 @@ namespace HomeMaintenanceApp.Services
 
         // ------------------------- Knowledge ---------------------------------
         public ObservableCollection<string> KnowledgeResources { get; } = new(); // user notes
-        public IList<string> KnowledgeToolsView { get; } = new List<string>();   // seeded tools view
+        public IList<string> KnowledgeToolsView { get; } = new List<string>();   // seeded tools (read-only)
         public record UsefulLifeRow(string Item, string Life);
-        public IList<UsefulLifeRow> KnowledgeUsefulLife { get; } = new List<UsefulLifeRow>(); // seeded life chart
+        public IList<UsefulLifeRow> KnowledgeUsefulLife { get; } = new List<UsefulLifeRow>(); // seeded (read-only)
 
         // ------------------------- Preferences keys --------------------------
         private const string PREF_KEY_SEASONAL = "SeasonalListsJson";
         private const string PREF_KEY_HURRICANE = "HurricaneListJson";
         private const string PREF_KEY_TASKS = "TasksJson";
         private const string PREF_KEY_PROPERTY = "PropertyJson";
-        private const string PREF_KEY_KNOWLEDGE = "KnowledgeJson";      // user notes
-        private const string PREF_KEY_ISSUES = "IssuesJson";         // active issues
-        private const string PREF_KEY_ISSUES_HISTORY = "IssuesHistoryJson";  // resolved issues history
+        private const string PREF_KEY_KNOWLEDGE = "KnowledgeJson";       // user notes only
+        private const string PREF_KEY_ISSUES = "IssuesJson";          // active issues
+        private const string PREF_KEY_ISSUES_HISTORY = "IssuesHistoryJson";   // resolved issues
+
+        // ------------------------- Scheduling constants/helpers --------------
+        // Vinegar cadence: monthly on the 28th (you can change this day if you prefer)
+        private const int VINEGAR_DAY_OF_MONTH = 28;
 
         public MaintenanceManager()
         {
-            // Initialize defaults
+            // Defaults
             Property = new Property { Address = "", HasPool = false, TrashDay = null };
 
-            // Hydrate from Preferences
+            // Hydrate previously saved data
             LoadPropertyFromPreferences();
             LoadListsFromPreferences();
             LoadTasksFromPreferences();
-            LoadKnowledgeFromPreferences();    // user notes
+            LoadKnowledgeFromPreferences();
             LoadIssuesFromPreferences();
             LoadIssuesHistoryFromPreferences();
 
@@ -77,6 +81,7 @@ namespace HomeMaintenanceApp.Services
                 };
                 Appliances.Add(hvac);
 
+                // Initial demo task
                 if (!Tasks.Any())
                 {
                     Tasks.Add(new MaintenanceTask
@@ -92,8 +97,8 @@ namespace HomeMaintenanceApp.Services
                 }
             }
 
-            // ✅ Keep a sample issue to help new users (only added if none exist)
-            if (!Issues.Any())
+            // ✅ Keep one sample issue for onboarding (only if empty)
+            if (!Issues.Any() && !IssuesHistory.Any())
             {
                 Issues.Add(new IssueRecord
                 {
@@ -102,6 +107,7 @@ namespace HomeMaintenanceApp.Services
                     Severity = IssueSeverity.Moderate,
                     ReportedOn = DateTime.Now,
                     Resolved = false,
+                    ResolvedOn = null,
                     AttemptedSteps = "Checked P-trap and tightened fittings.",
                     FixNotes = "Replaced worn gasket; monitored for 48h."
                 });
@@ -148,13 +154,10 @@ namespace HomeMaintenanceApp.Services
                 HurricaneChecklist.Add("Verify evacuation routes & contacts");
             }
 
-            // Monthly housekeeping tasks
-            SeedMonthlyHousekeepingIfMissing();
-
-            // Pool checklist (Seasonal tab)
+            SeedMonthlyHousekeepingIfMissing();  // includes vinegar & paint touch-up
             SeedPoolChecklistIfMissing();
 
-            // ------------------ Knowledge: Basic Tools (seeded view) ----------
+            // Knowledge seeds (tools)
             if (KnowledgeToolsView.Count == 0)
             {
                 KnowledgeToolsView.Add("Flashlight and batteries");
@@ -172,7 +175,7 @@ namespace HomeMaintenanceApp.Services
                 KnowledgeToolsView.Add("Nails, screws and bolts");
             }
 
-            // ------------------ Knowledge: Expected Useful Life (seeded view) --
+            // Knowledge seeds (expected useful life)
             if (KnowledgeUsefulLife.Count == 0)
             {
                 KnowledgeUsefulLife.Add(new UsefulLifeRow("Clothes washer or dryer", "≈ 10 years"));
@@ -192,19 +195,34 @@ namespace HomeMaintenanceApp.Services
                 KnowledgeUsefulLife.Add(new UsefulLifeRow("Carpeting", "≈ 5 years"));
             }
 
-            // Persist seeds so they remain next launch
+            // Persist seeds
             SavePropertyToPreferences();
             SaveListsToPreferences();
             SaveTasksToPreferences();
-            SaveKnowledgeToPreferences();   // user notes
+            SaveKnowledgeToPreferences();
             SaveIssuesToPreferences();
             SaveIssuesHistoryToPreferences();
         }
 
-        // -------------------------- Tasks CRUD -------------------------------
+        // -------------------------- Tasks CRUD + Scheduling ------------------
         public void AddTask(MaintenanceTask task)
         {
+            // If recurrence & no due date set, choose a sensible default
+            if (task.DueDate is null && task.Recurrence != TaskRecurrence.None)
+            {
+                task.DueDate = NextDueFrom(DateTime.Today, task.Recurrence, monthlyDayOfMonth: VINEGAR_DAY_OF_MONTH);
+            }
+
             Tasks.Add(task);
+            SaveTasksToPreferences();
+        }
+
+        public void StartTask(Guid id)
+        {
+            var t = Tasks.FirstOrDefault(x => x.Id == id);
+            if (t is null) return;
+
+            t.Status = ModelsTaskStatus.InProgress;
             SaveTasksToPreferences();
         }
 
@@ -233,6 +251,9 @@ namespace HomeMaintenanceApp.Services
             SaveTasksToPreferences();
         }
 
+        /// <summary>
+        /// Marks task Completed (stamps today's date) and auto-reschedules based on Recurrence.
+        /// </summary>
         public void CompleteTask(Guid id)
         {
             var t = Tasks.FirstOrDefault(x => x.Id == id);
@@ -243,27 +264,20 @@ namespace HomeMaintenanceApp.Services
 
             if (t.Recurrence != TaskRecurrence.None)
             {
-                DateTime baseDate = t.DueDate ?? DateTime.Today;
-                DateTime nextDue = t.Recurrence switch
-                {
-                    TaskRecurrence.Weekly => baseDate.AddDays(7),
-                    TaskRecurrence.Monthly => baseDate.AddMonths(1),
-                    TaskRecurrence.Yearly => baseDate.AddYears(1),
-                    _ => baseDate
-                };
+                // Compute next due based on the recurrence and a stable monthly day-of-month
+                var anchorDay = t.DueDate?.Day ?? VINEGAR_DAY_OF_MONTH; // keep same day-of-month if possible
+                t.DueDate = NextDueFrom(DateTime.Today, t.Recurrence, monthlyDayOfMonth: anchorDay);
 
+                // Return task to "NotStarted" so it's ready to do again
                 t.Status = ModelsTaskStatus.NotStarted;
-                t.DueDate = nextDue;
             }
 
             SaveTasksToPreferences();
         }
 
         public MaintenanceTask? GetTask(Guid id) => Tasks.FirstOrDefault(t => t.Id == id);
-        public ObservableCollection<MaintenanceTask> GetTasksByStatus(ModelsTaskStatus status)
-            => new(Tasks.Where(t => t.Status == status));
 
-        // -------------------------- Issues CRUD + History --------------------
+        // -------------------------- Issues + History -------------------------
         public void AddIssue(IssueRecord issue)
         {
             Issues.Add(issue);
@@ -272,18 +286,15 @@ namespace HomeMaintenanceApp.Services
 
         public void UpdateIssue(IssueRecord updated)
         {
-            var existing = Issues.FirstOrDefault(i => i.Id == updated.Id);
-            if (existing is null)
-            {
-                // If it's in history, allow edits there too
-                existing = IssuesHistory.FirstOrDefault(i => i.Id == updated.Id);
-                if (existing is null) return;
-            }
+            var existing = Issues.FirstOrDefault(i => i.Id == updated.Id)
+                        ?? IssuesHistory.FirstOrDefault(i => i.Id == updated.Id);
+            if (existing is null) return;
 
             existing.Title = updated.Title;
             existing.Description = updated.Description;
             existing.Severity = updated.Severity;
             existing.Resolved = updated.Resolved;
+            existing.ResolvedOn = updated.ResolvedOn;
             existing.AttemptedSteps = updated.AttemptedSteps;
             existing.FixNotes = updated.FixNotes;
             existing.ApplianceId = updated.ApplianceId;
@@ -315,7 +326,7 @@ namespace HomeMaintenanceApp.Services
             => Issues.FirstOrDefault(i => i.Id == id) ?? IssuesHistory.FirstOrDefault(i => i.Id == id);
 
         /// <summary>
-        /// Mark resolved and move from Active Issues to IssuesHistory.
+        /// Mark resolved (stamp date) and move from Active Issues to IssuesHistory.
         /// </summary>
         public void ResolveIssue(Guid id)
         {
@@ -323,6 +334,7 @@ namespace HomeMaintenanceApp.Services
             if (issue is null) return;
 
             issue.Resolved = true;
+            issue.ResolvedOn = DateTime.Today;
 
             Issues.Remove(issue);
             IssuesHistory.Add(issue);
@@ -331,7 +343,7 @@ namespace HomeMaintenanceApp.Services
             SaveIssuesHistoryToPreferences();
         }
 
-        // -------------------------- Appliances CRUD --------------------------
+        // -------------------------- Appliances -------------------------------
         public void AddAppliance(Appliance appliance) => Appliances.Add(appliance);
         public Appliance? GetAppliance(Guid id) => Appliances.FirstOrDefault(a => a.Id == id);
 
@@ -371,7 +383,7 @@ namespace HomeMaintenanceApp.Services
                 Title = "Pool: Weekly – skim surface, brush walls, empty baskets",
                 Priority = TaskPriority.Low,
                 Status = ModelsTaskStatus.NotStarted,
-                DueDate = DateTime.Today.AddDays(7),
+                DueDate = NextDueFrom(DateTime.Today, TaskRecurrence.Weekly),
                 Recurrence = TaskRecurrence.Weekly
             });
 
@@ -380,7 +392,7 @@ namespace HomeMaintenanceApp.Services
                 Title = "Pool: Weekly – test chlorine & pH; adjust as needed",
                 Priority = TaskPriority.Low,
                 Status = ModelsTaskStatus.NotStarted,
-                DueDate = DateTime.Today.AddDays(7),
+                DueDate = NextDueFrom(DateTime.Today, TaskRecurrence.Weekly),
                 Recurrence = TaskRecurrence.Weekly
             });
 
@@ -389,7 +401,7 @@ namespace HomeMaintenanceApp.Services
                 Title = "Pool: Monthly – inspect pump & filter; backwash/clean",
                 Priority = TaskPriority.Medium,
                 Status = ModelsTaskStatus.NotStarted,
-                DueDate = DateTime.Today.AddMonths(1),
+                DueDate = NextDueFrom(DateTime.Today, TaskRecurrence.Monthly, monthlyDayOfMonth: VINEGAR_DAY_OF_MONTH),
                 Recurrence = TaskRecurrence.Monthly
             });
         }
@@ -407,7 +419,7 @@ namespace HomeMaintenanceApp.Services
                     Description = "Pour into condensate drain to inhibit algae buildup",
                     Priority = TaskPriority.Low,
                     Status = ModelsTaskStatus.NotStarted,
-                    DueDate = DateTime.Today.AddMonths(1),
+                    DueDate = NextDueFrom(DateTime.Today, TaskRecurrence.Monthly, monthlyDayOfMonth: VINEGAR_DAY_OF_MONTH),
                     Recurrence = TaskRecurrence.Monthly
                 });
             }
@@ -420,7 +432,7 @@ namespace HomeMaintenanceApp.Services
                     Description = "Inspect high-traffic areas and exterior trim",
                     Priority = TaskPriority.Low,
                     Status = ModelsTaskStatus.NotStarted,
-                    DueDate = DateTime.Today.AddMonths(1),
+                    DueDate = NextDueFrom(DateTime.Today, TaskRecurrence.Monthly, monthlyDayOfMonth: DateTime.Today.Day),
                     Recurrence = TaskRecurrence.Monthly
                 });
             }
@@ -624,6 +636,101 @@ namespace HomeMaintenanceApp.Services
                 Preferences.Set(PREF_KEY_ISSUES_HISTORY, json);
             }
             catch { /* swallow */ }
+        }
+
+        // ====================================================================
+        // ========================= RESET HELPERS =============================
+        // ====================================================================
+
+        /// <summary>
+        /// Clears the Property information only (Address, HasPool, TrashDay) and saves.
+        /// Use this to remove a test address on your device without touching other data.
+        /// </summary>
+        public void ResetAllData()
+        {
+            Property = new Property { Address = "", HasPool = false, TrashDay = null };
+            SavePropertyToPreferences();
+
+            try { Preferences.Remove(PREF_KEY_PROPERTY); } catch { /* swallow */ }
+            SavePropertyToPreferences();
+        }
+
+        /// <summary>
+        /// Clears ALL locally persisted app data on the device (Tasks, Issues + History,
+        /// Seasonal/Pool/Hurricane lists, Knowledge notes, and Property).
+        /// </summary>
+        public void ResetEverything()
+        {
+            // Property
+            Property = new Property { Address = "", HasPool = false, TrashDay = null };
+            SavePropertyToPreferences();
+
+            // Tasks
+            Tasks.Clear();
+            SaveTasksToPreferences();
+            try { Preferences.Remove(PREF_KEY_TASKS); } catch { /* swallow */ }
+
+            // Issues & History
+            Issues.Clear();
+            SaveIssuesToPreferences();
+            IssuesHistory.Clear();
+            SaveIssuesHistoryToPreferences();
+
+            // Seasonal + Pool + Hurricane lists
+            SpringChecklist.Clear();
+            SummerChecklist.Clear();
+            AutumnChecklist.Clear();
+            WinterChecklist.Clear();
+            PoolChecklist.Clear();
+            HurricaneChecklist.Clear();
+            SaveListsToPreferences();
+            try { Preferences.Remove(PREF_KEY_SEASONAL); } catch { /* swallow */ }
+            try { Preferences.Remove(PREF_KEY_HURRICANE); } catch { /* swallow */ }
+
+            // Knowledge (user notes only; seeded tools/expected life are not persisted)
+            KnowledgeResources.Clear();
+            SaveKnowledgeToPreferences();
+            try { Preferences.Remove(PREF_KEY_KNOWLEDGE); } catch { /* swallow */ }
+        }
+
+        // ====================================================================
+        // ===================== SCHEDULING UTILITIES ==========================
+        // ====================================================================
+
+        /// <summary>
+        /// Compute the next due date from a given "from" date for a recurrence.
+        /// If monthly, you can pass a desired day-of-month (e.g., 28 for vinegar).
+        /// </summary>
+        public static DateTime NextDueFrom(DateTime from, TaskRecurrence recurrence, int? monthlyDayOfMonth = null)
+        {
+            from = from.Date;
+            return recurrence switch
+            {
+                TaskRecurrence.Weekly => from.AddDays(7),
+                TaskRecurrence.Monthly => NextMonthlyOnOrAfter(from, monthlyDayOfMonth ?? 28),
+                TaskRecurrence.Yearly => from.AddYears(1),
+                _ => from
+            };
+        }
+
+        /// <summary>
+        /// Next date on or after 'from' that falls on 'dayOfMonth', clamped to the last day if needed.
+        /// Example: from=Feb 3, day=28 => Feb 28; from=Feb 29, day=28 => Mar 28; from=Feb 27, day=30 => Feb 28, etc.
+        /// </summary>
+        public static DateTime NextMonthlyOnOrAfter(DateTime from, int dayOfMonth)
+        {
+            var target = DateForMonth(from.Year, from.Month, dayOfMonth);
+            if (from <= target) return target;
+
+            var nextMonth = from.AddMonths(1);
+            return DateForMonth(nextMonth.Year, nextMonth.Month, dayOfMonth);
+        }
+
+        private static DateTime DateForMonth(int year, int month, int dayOfMonth)
+        {
+            int days = DateTime.DaysInMonth(year, month);
+            int day = Math.Min(Math.Max(1, dayOfMonth), days);
+            return new DateTime(year, month, day);
         }
     }
 }

@@ -1,7 +1,5 @@
-
 using System;
 using Microsoft.Maui.Controls;
-using Microsoft.Maui.Storage;
 using HomeMaintenanceApp.Services;
 
 namespace HomeMaintenanceApp.Pages
@@ -16,40 +14,91 @@ namespace HomeMaintenanceApp.Pages
 
             _manager = new MaintenanceManager();
 
-            // Default: no selection
-            TrashDayPicker.SelectedIndex = -1;
+            // Load persisted property values into the UI
+            _manager.LoadPropertyFromPreferences();
+
+            AddressEntry.Text = _manager.Property?.Address ?? string.Empty;
+            HasPoolSwitch.IsToggled = _manager.Property?.HasPool ?? false;
+
+            // Trash day -> Picker; default to "(not set)" if null
+            var trash = _manager.Property?.TrashDay;
+            TrashDayPicker.SelectedIndex = trash.HasValue ? (int)trash.Value : 7; // index 7 == "(not set)"
+
+            RefreshPropertySummary();
         }
 
-        private async void OnContinueClicked(object sender, EventArgs e)
+        private void RefreshPropertySummary()
         {
-            var addr = AddressEntry.Text?.Trim() ?? "";
-            _manager.SetPropertyAddress(addr);
-            _manager.SetHasPool(PoolSwitch.IsToggled);
+            var addr = _manager.Property?.Address ?? "";
+            AddressLabel.Text = string.IsNullOrWhiteSpace(addr) ? "(empty)" : addr;
 
-            // Map picker to DayOfWeek?
-            System.DayOfWeek? trashDay = null;
-            if (TrashDayPicker.SelectedIndex >= 0)
-            {
-                var text = (string)TrashDayPicker.Items[TrashDayPicker.SelectedIndex];
-                trashDay = text switch
-                {
-                    "Sunday" => DayOfWeek.Sunday,
-                    "Monday" => DayOfWeek.Monday,
-                    "Tuesday" => DayOfWeek.Tuesday,
-                    "Wednesday" => DayOfWeek.Wednesday,
-                    "Thursday" => DayOfWeek.Thursday,
-                    "Friday" => DayOfWeek.Friday,
-                    "Saturday" => DayOfWeek.Saturday,
-                    _ => null
-                };
-                _manager.SetTrashDay(trashDay);
-            }
+            PoolLabel.Text = (_manager.Property?.HasPool ?? false) ? "Yes" : "No";
+            var trash = _manager.Property?.TrashDay;
+            TrashLabel.Text = trash.HasValue ? trash.Value.ToString() : "(not set)";
+        }
 
-            // mark first run complete
-            Preferences.Set("FirstRunCompleted", true);
+        // Save property (Address, HasPool, TrashDay)
+        private async void OnSavePropertyClicked(object sender, EventArgs e)
+        {
+            var newAddress = AddressEntry.Text?.Trim() ?? string.Empty;
+            var hasPool = HasPoolSwitch.IsToggled;
 
-            await Shell.Current.GoToAsync("//Home");
+            DayOfWeek? trashDay = null;
+            if (TrashDayPicker.SelectedIndex >= 0 && TrashDayPicker.SelectedIndex <= 6)
+                trashDay = (DayOfWeek)TrashDayPicker.SelectedIndex;
+
+            // Save via manager
+            _manager.SetPropertyAddress(newAddress);
+            _manager.SetHasPool(hasPool);
+            _manager.SetTrashDay(trashDay);
+
+            RefreshPropertySummary();
+
+            await DisplayAlert("Saved", "Property values updated.", "OK");
+        }
+
+        // Reset Property only (Address, HasPool, TrashDay)
+        private async void OnResetPropertyClicked(object sender, EventArgs e)
+        {
+            bool confirm = await DisplayAlert(
+                "Reset Property",
+                "This will clear Address, Has Pool, and Trash Day. Continue?",
+                "Reset", "Cancel");
+
+            if (!confirm) return;
+
+            _manager.ResetAllData(); // calls SavePropertyToPreferences internally
+
+            // Refresh UI fields to blank/defaults
+            AddressEntry.Text = string.Empty;
+            HasPoolSwitch.IsToggled = false;
+            TrashDayPicker.SelectedIndex = 7; // "(not set)"
+
+            RefreshPropertySummary();
+
+            await DisplayAlert("Done", "Property values cleared.", "OK");
+        }
+
+        // Reset ALL local data (factory reset)
+        private async void OnResetAllClicked(object sender, EventArgs e)
+        {
+            bool confirm = await DisplayAlert(
+                "Reset ALL Data",
+                "This will clear ALL local app data (Tasks, Issues + History, Seasonal/Pool/Hurricane lists, Knowledge notes, and Property). Continue?",
+                "Reset ALL", "Cancel");
+
+            if (!confirm) return;
+
+            _manager.ResetAllData();
+
+            // Refresh UI after a factory reset
+            AddressEntry.Text = string.Empty;
+            HasPoolSwitch.IsToggled = false;
+            TrashDayPicker.SelectedIndex = 7;
+
+            RefreshPropertySummary();
+
+            await DisplayAlert("Done", "All local app data has been cleared.", "OK");
         }
     }
 }
-

@@ -4,33 +4,132 @@
              x:Class="HomeMaintenanceApp.Pages.OnboardingPage"
              Title="Welcome">
 
-    <VerticalStackLayout Padding="16" Spacing="12">
+    <ScrollView>
+        <VerticalStackLayout Padding="12" Spacing="12" BackgroundColor="#101820">
 
-        <Label Text="Set up your property" FontSize="22" FontAttributes="Bold" />
+            <!-- Header -->
+            <Grid ColumnDefinitions="Auto,*">
+                <Label Text="Welcome"
+                       FontSize="22"
+                       FontAttributes="Bold"
+                       TextColor="White"/>
+                <Label Grid.Column="1"
+                       Text="Set your property details or reset test data"
+                       TextColor="#93c5fd"
+                       HorizontalTextAlignment="End"
+                       VerticalTextAlignment="Center"/>
+            </Grid>
 
-        <Label Text="Property Address" />
-        <Entry x:Name="AddressEntry" Placeholder="123 Main St, City, ST" />
+            <!-- Current property summary -->
+            <Border BackgroundColor="#1F2937" Stroke="#334155" Padding="12">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="8"/>
+                </Border.StrokeShape>
 
-        <Grid ColumnDefinitions="*,Auto" Padding="0,8,0,0">
-            <Label Text="Does this property have a pool?" VerticalOptions="Center" />
-            <Switch x:Name="PoolSwitch" Grid.Column="1" />
-        </Grid>
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Property summary"
+                           TextColor="White"
+                           FontAttributes="Bold"/>
 
-        <!-- NEW: Trash day picker -->
-        <Label Text="When is trash day?" />
-        <Picker x:Name="TrashDayPicker">
-            <Picker.Items>
-                <x:String>Sunday</x:String>
-                <x:String>Monday</x:String>
-                <x:String>Tuesday</x:String>
-                <x:String>Wednesday</x:String>
-                <x:String>Thursday</x:String>
-                <x:String>Friday</x:String>
-                <x:String>Saturday</x:String>
-            </Picker.Items>
-        </Picker>
+                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="4">
+                        <Label Grid.Row="0" Grid.Column="0" Text="Address:" TextColor="#93c5fd"/>
+                        <Label Grid.Row="0" Grid.Column="1" x:Name="AddressLabel" Text="-" TextColor="White"/>
 
-        <Button Text="Continue" Clicked="OnContinueClicked" />
+                        <Label Grid.Row="1" Grid.Column="0" Text="Has Pool:" TextColor="#93c5fd"/>
+                        <Label Grid.Row="1" Grid.Column="1" x:Name="PoolLabel" Text="-" TextColor="White"/>
 
-    </VerticalStackLayout>
+                        <Label Grid.Row="2" Grid.Column="0" Text="Trash Day:" TextColor="#93c5fd"/>
+                        <Label Grid.Row="2" Grid.Column="1" x:Name="TrashLabel" Text="-" TextColor="White"/>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Onboarding inputs (keep these aligned with your actual controls) -->
+            <Border BackgroundColor="#1F2937" Stroke="#334155" Padding="12">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="8"/>
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="10">
+                    <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*" RowSpacing="10" ColumnSpacing="12">
+                        <Label Grid.Row="0" Grid.Column="0" Text="Address" TextColor="White"/>
+                        <Entry  Grid.Row="0" Grid.Column="1" x:Name="AddressEntry" Placeholder="e.g., 123 Main St" TextColor="White" />
+
+                        <Label Grid.Row="1" Grid.Column="0" Text="Has Pool" TextColor="White"/>
+                        <Switch Grid.Row="1" Grid.Column="1" x:Name="HasPoolSwitch" />
+
+                        <Label Grid.Row="2" Grid.Column="0" Text="Trash Day" TextColor="White"/>
+                        <Picker Grid.Row="2" Grid.Column="1" x:Name="TrashDayPicker">
+                            <Picker.Items>
+                                <x:String>Sunday</x:String>
+                                <x:String>Monday</x:String>
+                                <x:String>Tuesday</x:String>
+                                <x:String>Wednesday</x:String>
+                                <x:String>Thursday</x:String>
+                                <x:String>Friday</x:String>
+                                <x:String>Saturday</x:String>
+                                <x:String>(not set)</x:String>
+                            </Picker.Items>
+                        </Picker>
+                    </Grid>
+
+                    <HorizontalStackLayout Spacing="8" Margin="0,12,0,0">
+                        <Button Text="Save"
+                                BackgroundColor="#0ea5e9"
+                                TextColor="White"
+                                Clicked="OnSavePropertyClicked"/>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Reset tools (no new page; lives right in Onboarding) -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+
+                <!-- Reset Property (address, pool, trash day) -->
+                <Border Grid.Column="0"
+                        BackgroundColor="#14b8a6"
+                        Stroke="#14b8a6"
+                        Padding="12"
+                        StrokeThickness="1">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8"/>
+                    </Border.StrokeShape>
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Reset Property"
+                               TextColor="White"
+                               FontAttributes="Bold"/>
+                        <Label Text="Clears Address, Has Pool, and Trash Day (handy for removing test values)."
+                               TextColor="#e5e7eb"/>
+                        <Button Text="Reset Property"
+                                BackgroundColor="#0ea5e9"
+                                TextColor="White"
+                                Clicked="OnResetPropertyClicked"/>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Reset ALL (factory reset) -->
+                <Border Grid.Column="1"
+                        BackgroundColor="#ef4444"
+                        Stroke="#ef4444"
+                        Padding="12"
+                        StrokeThickness="1">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8"/>
+                    </Border.StrokeShape>
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Reset ALL Data"
+                               TextColor="White"
+                               FontAttributes="Bold"/>
+                        <Label Text="Factory reset: clears Tasks, Issues+History, Seasonal/Pool/Hurricane lists, Knowledge notes, and Property."
+                               TextColor="#fde68a"/>
+                        <Button Text="Reset ALL Data"
+                                BackgroundColor="#dc2626"
+                                TextColor="White"
+                                Clicked="OnResetAllClicked"/>
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

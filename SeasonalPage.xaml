@@ -4,36 +4,180 @@
              x:Class="HomeMaintenanceApp.Pages.SeasonalPage"
              Title="Seasonal Maintenance">
 
-    <VerticalStackLayout Padding="12" Spacing="8" BackgroundColor="#101820">
+    <VerticalStackLayout Padding="12" Spacing="10" BackgroundColor="#101820">
 
-        <!-- Season toggle buttons -->
-        <Grid ColumnDefinitions="*,*,*,*,*">
-            <Button x:Name="SpringBtn" Text="🌱 Spring"  Clicked="OnSpring" />
-            <Button Grid.Column="1" x:Name="SummerBtn" Text="☀️ Summer"  Clicked="OnSummer" />
-            <Button Grid.Column="2" x:Name="AutumnBtn" Text="🍂 Autumn"  Clicked="OnAutumn" />
-            <Button Grid.Column="3" x:Name="WinterBtn" Text="❄️ Winter"  Clicked="OnWinter" />
-            <!-- ✅ Pool tab -->
-            <Button Grid.Column="4" x:Name="PoolBtn"   Text="🏊 Pool"    Clicked="OnPool" />
+        <!-- Tabs + top action buttons -->
+        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="6">
+
+            <!-- Season tabs -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="8">
+                <Button x:Name="SpringBtn"  Text="🌱 Spring"  Clicked="OnSpring"  />
+                <Button x:Name="SummerBtn"  Grid.Column="1" Text="☀️ Summer"  Clicked="OnSummer"  />
+                <Button x:Name="AutumnBtn"  Grid.Column="2" Text="🍂 Autumn"  Clicked="OnAutumn"  />
+                <Button x:Name="WinterBtn"  Grid.Column="3" Text="❄️ Winter"  Clicked="OnWinter"  />
+                <Button x:Name="PoolBtn"    Grid.Column="4" Text="🏊 Pool"    Clicked="OnPool"    />
+            </Grid>
+
+            <!-- Top action buttons: Restore defaults + Restart all done + Delete selected -->
+            <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="8" HorizontalOptions="End">
+
+                <!-- Indigo Restore Defaults (Border + Tap) -->
+                <Border x:Name="RestoreDefaultsPanel"
+                        BackgroundColor="#6366f1"
+                        Stroke="#6366f1"
+                        Padding="10,6"
+                        StrokeThickness="1"
+                        VerticalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="6"/>
+                    </Border.StrokeShape>
+                    <HorizontalStackLayout Spacing="6">
+                        <Label Text="Restore defaults"
+                               TextColor="White"
+                               FontAttributes="Bold"/>
+                    </HorizontalStackLayout>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnRestoreDefaultsTapped"/>
+                    </Border.GestureRecognizers>
+                </Border>
+
+                <!-- Purple Restart all done (Border + Tap) -->
+                <Border x:Name="RestartAllDonePanel"
+                        BackgroundColor="#a78bfa"
+                        Stroke="#a78bfa"
+                        Padding="10,6"
+                        StrokeThickness="1"
+                        VerticalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="6"/>
+                    </Border.StrokeShape>
+                    <HorizontalStackLayout Spacing="6">
+                        <Label Text="Restart all done"
+                               TextColor="White"
+                               FontAttributes="Bold"/>
+                    </HorizontalStackLayout>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnRestartAllDoneTapped"/>
+                    </Border.GestureRecognizers>
+                </Border>
+
+                <!-- RED Delete Selected (Border + Tap) -->
+                <Border x:Name="DeleteSelectedPanel"
+                        BackgroundColor="#ef4444"
+                        Stroke="#ef4444"
+                        Padding="10,6"
+                        StrokeThickness="1"
+                        VerticalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="6"/>
+                    </Border.StrokeShape>
+                    <HorizontalStackLayout Spacing="6">
+                        <Label Text="Delete selected"
+                               TextColor="White"
+                               FontAttributes="Bold"/>
+                    </HorizontalStackLayout>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnDeleteSelectedTapped"/>
+                    </Border.GestureRecognizers>
+                </Border>
+
+            </Grid>
         </Grid>
 
-        <!-- Add item -->
+        <!-- Add new item row -->
         <Border BackgroundColor="#1F2937" Stroke="#334155">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="8"/>
+            </Border.StrokeShape>
+
             <Grid ColumnDefinitions="*,Auto" Padding="12">
-                <Entry x:Name="NewItemEntry" Placeholder="Add a checklist item..." HorizontalOptions="Fill"/>
-                <Button Grid.Column="1" Text="Add" Clicked="OnAddItem"/>
+                <Entry x:Name="NewItemEntry"
+                       Placeholder="Add a checklist item..."
+                       TextColor="White"
+                       BackgroundColor="#0f1d2f"
+                       HorizontalOptions="Fill"/>
+                <Button Grid.Column="1"
+                        Text="Add"
+                        Clicked="OnAddItem"/>
             </Grid>
         </Border>
 
-        <!-- Checklist list -->
-        <CollectionView x:Name="SeasonList" BackgroundColor="#0f1d2f">
+        <!-- Current season list -->
+        <CollectionView x:Name="SeasonList"
+                        BackgroundColor="#0f1d2f"
+                        SelectionMode="None"
+                        ItemsLayout="VerticalList">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Grid ColumnDefinitions="Auto,*" Padding="6">
-                        <CheckBox />
-                        <Label Grid.Column="1" Text="{Binding}" TextColor="White"/>
-                    </Grid>
+
+                    <SwipeView>
+                        <SwipeView.RightItems>
+                            <SwipeItems Mode="Reveal">
+                                <SwipeItem Text="Edit"
+                                           BackgroundColor="#3b82f6"
+                                           Invoked="OnEditSwipe"/>
+                                <SwipeItem Text="Restart"
+                                           BackgroundColor="#a78bfa"
+                                           Invoked="OnRestartSwipe"/>
+                                <SwipeItem Text="Delete"
+                                           BackgroundColor="#ef4444"
+                                           Invoked="OnDeleteSwipe"/>
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+
+                        <!-- Row -->
+                        <Grid Padding="10"
+                              ColumnDefinitions="Auto,*,Auto,Auto"
+                              ColumnSpacing="12">
+
+                            <!-- DONE checkbox (marks complete, greys out, shows date) -->
+                            <CheckBox IsChecked="{Binding IsDone}"
+                                      CheckedChanged="OnDoneChanged" />
+
+                            <!-- Text + date -->
+                            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                <Label Text="{Binding Text}">
+                                    <Label.Triggers>
+                                        <!-- Grey out when done -->
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsDone}" Value="True">
+                                            <Setter Property="TextColor" Value="#9ca3af"/>
+                                            <Setter Property="Opacity"   Value="0.7"/>
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+
+                                <!-- Completed date (visible when done) -->
+                                <Label Text="{Binding CompletedOn, StringFormat='Completed: {0:MMM d, yyyy}'}"
+                                       FontSize="12"
+                                       TextColor="#93c5fd"
+                                       IsVisible="{Binding IsDone}"/>
+                            </VerticalStackLayout>
+
+                            <!-- SELECT checkbox (for bulk delete) -->
+                            <CheckBox Grid.Column="2"
+                                      IsChecked="{Binding IsSelected}"
+                                      CheckedChanged="OnSelectChanged"/>
+
+                            <!-- Per-row red Delete -->
+                            <Button Grid.Column="3"
+                                    BackgroundColor="#ef4444"
+                                    TextColor="White"
+                                    Padding="10,6"
+                                    CornerRadius="6"
+                                    Text="Delete"
+                                    Clicked="OnDeleteRowClicked"
+                                    HorizontalOptions="End"
+                                    VerticalOptions="Center"/>
+                        </Grid>
+                    </SwipeView>
+
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+
+        <!-- Tip -->
+        <Label Text="Tip: Check the first box to mark done (date shown &amp; greyed out). Uncheck or swipe Restart to re-activate. Use the second box to select items for bulk delete; tap text to edit; swipe → Edit/Restart/Delete; per‑row Delete removes one. Done items auto‑restart after 30 days."
+               TextColor="#9ca3af"
+               FontSize="12"/>
     </VerticalStackLayout>
 </ContentPage>

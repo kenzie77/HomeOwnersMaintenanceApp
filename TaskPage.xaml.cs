@@ -1,11 +1,9 @@
 
 using System;
-using System.Linq;
 using Microsoft.Maui.Controls;
 using HomeMaintenanceApp.Models;
 using HomeMaintenanceApp.Services;
-// Alias to avoid ambiguity with System.Threading.Tasks.TaskStatus
-using ModelsTaskStatus = HomeMaintenanceApp.Models.TaskStatus;
+using TaskStatus = HomeMaintenanceApp.Models.TaskStatus;
 
 namespace HomeMaintenanceApp.Pages
 {
@@ -18,35 +16,79 @@ namespace HomeMaintenanceApp.Pages
             InitializeComponent();
 
             _manager = new MaintenanceManager();
-            _manager.LoadTasksFromPreferences();
 
-            TaskList.ItemsSource = _manager.Tasks;
+            // Initial load + bind
+            _manager.LoadTasksFromPreferences();
+            TaskList.ItemsSource = _manager.Tasks; // NOTE: matches x:Name in XAML
         }
 
-        // ------------------ Add ------------------
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+
+            // Reflect any changes (e.g., Onboarding resets)
+            _manager.LoadTasksFromPreferences();
+            TaskList.ItemsSource = _manager.Tasks;
+
+            // Optional: if user turned Pool OFF, hide any seeded pool tasks still present
+            // (manager.ResetEverything() already clears tasks; this is a second guard)
+            if (!(_manager.Property?.HasPool ?? false))
+            {
+                // Show only non-pool tasks. If you prefer removing them permanently,
+                // do it in SetHasPool(false) in the manager.
+                // TaskList.ItemsSource = new ObservableCollection<MaintenanceTask>(
+                //     _manager.Tasks.Where(t => !t.Title.StartsWith("Pool:", StringComparison.OrdinalIgnoreCase)));
+            }
+        }
+
+        // -------------------- Header: Add Task --------------------
         private void OnAddTaskClicked(object sender, EventArgs e)
         {
-            // Quick add a blank task, then user edits inline
             var t = new MaintenanceTask
             {
-                Title = "New task",
+                Title = "New Task",
                 Description = "",
-                Priority = TaskPriority.Low,
-                Status = ModelsTaskStatus.NotStarted,
-                DueDate = DateTime.Today.AddDays(7),
+                Priority = TaskPriority.Medium,
+                Status = TaskStatus.NotStarted,
+                DueDate = DateTime.Today.AddDays(7),   // default due; user can change
                 Recurrence = TaskRecurrence.None
             };
 
             _manager.AddTask(t);
         }
 
-        // ------------------ Inline actions ------------------
+        // -------------------- Swipe: Complete / Delete --------------------
+        private void OnCompleteSwipe(object sender, EventArgs e)
+        {
+            if (sender is SwipeItem swipe && swipe.BindingContext is MaintenanceTask task)
+            {
+                _manager.CompleteTask(task.Id);
+                // Optional toast
+                DisplayAlert("Completed",
+                    $"{task.Title} completed on {DateTime.Today:MMM d, yyyy}. Next due: {task.DueDate:MMM d, yyyy}",
+                    "OK");
+            }
+        }
+
+        private async void OnDeleteSwipe(object sender, EventArgs e)
+        {
+            if (sender is SwipeItem swipe && swipe.BindingContext is MaintenanceTask task)
+            {
+                bool confirm = await DisplayAlert("Delete task",
+                    $"Delete \"{task.Title}\"?",
+                    "Delete", "Cancel");
+                if (!confirm) return;
+
+                _manager.DeleteTask(task.Id);
+            }
+        }
+
+        // -------------------- Row: Start / Done buttons --------------------
         private void OnStartClicked(object sender, EventArgs e)
         {
             if (sender is Button btn && btn.BindingContext is MaintenanceTask task)
             {
-                task.Status = ModelsTaskStatus.InProgress;
-                _manager.UpdateTask(task);
+                _manager.StartTask(task.Id);
             }
         }
 
@@ -54,17 +96,22 @@ namespace HomeMaintenanceApp.Pages
         {
             if (sender is Button btn && btn.BindingContext is MaintenanceTask task)
             {
-                // Use manager's CompleteTask so recurrence advances
                 _manager.CompleteTask(task.Id);
+
+                // Optional toast with completed + next due
+                DisplayAlert("Completed",
+                    $"{task.Title} completed on {DateTime.Today:MMM d, yyyy}. Next due: {task.DueDate:MMM d, yyyy}",
+                    "OK");
             }
         }
 
+        // -------------------- Inline editors (Priority / Status / Due) --------------------
         private void OnPriorityChanged(object sender, EventArgs e)
         {
             if (sender is Picker picker && picker.BindingContext is MaintenanceTask task)
             {
                 var val = picker.SelectedItem as string;
-                var prio = val switch
+                var newPriority = val switch
                 {
                     "Low" => TaskPriority.Low,
                     "Medium" => TaskPriority.Medium,
@@ -73,9 +120,9 @@ namespace HomeMaintenanceApp.Pages
                     _ => task.Priority
                 };
 
-                if (prio != task.Priority)
+                if (newPriority != task.Priority)
                 {
-                    task.Priority = prio;
+                    task.Priority = newPriority;
                     _manager.UpdateTask(task);
                 }
             }
@@ -86,24 +133,27 @@ namespace HomeMaintenanceApp.Pages
             if (sender is Picker picker && picker.BindingContext is MaintenanceTask task)
             {
                 var val = picker.SelectedItem as string;
-                var status = val switch
+                var newStatus = val switch
                 {
-                    "NotStarted" => ModelsTaskStatus.NotStarted,
-                    "InProgress" => ModelsTaskStatus.InProgress,
-                    "Completed" => ModelsTaskStatus.Completed,
-                    "Deferred" => ModelsTaskStatus.Deferred,
+                    "NotStarted" => TaskStatus.NotStarted,
+                    "InProgress" => TaskStatus.InProgress,
+                    "Completed" => TaskStatus.Completed,
+                    "Deferred" => TaskStatus.Deferred,
                     _ => task.Status
                 };
 
-                // If Completed chosen, go through CompleteTask to auto-reschedule
-                if (status == ModelsTaskStatus.Completed)
+                if (newStatus != task.Status)
                 {
-                    _manager.CompleteTask(task.Id);
-                }
-                else if (status != task.Status)
-                {
-                    task.Status = status;
-                    _manager.UpdateTask(task);
+                    // If user manually sets Completed via picker, do the complete flow (stamp + reschedule)
+                    if (newStatus == TaskStatus.Completed)
+                    {
+                        _manager.CompleteTask(task.Id);
+                    }
+                    else
+                    {
+                        task.Status = newStatus;
+                        _manager.UpdateTask(task);
+                    }
                 }
             }
         }
@@ -114,23 +164,6 @@ namespace HomeMaintenanceApp.Pages
             {
                 task.DueDate = e.NewDate;
                 _manager.UpdateTask(task);
-            }
-        }
-
-        // ------------------ Swipe actions ------------------
-        private void OnCompleteSwipe(object sender, EventArgs e)
-        {
-            if (sender is SwipeItem swipe && swipe.BindingContext is MaintenanceTask task)
-            {
-                _manager.CompleteTask(task.Id);
-            }
-        }
-
-        private void OnDeleteSwipe(object sender, EventArgs e)
-        {
-            if (sender is SwipeItem swipe && swipe.BindingContext is MaintenanceTask task)
-            {
-                _manager.DeleteTask(task.Id);
             }
         }
     }

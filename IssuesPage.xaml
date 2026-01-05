@@ -4,41 +4,87 @@
              x:Class="HomeMaintenanceApp.Pages.IssuesPage"
              Title="Issues">
 
-    <Grid RowDefinitions="Auto,*" Padding="12" BackgroundColor="#101820">
+    <Grid RowDefinitions="Auto,Auto,Auto,*" Padding="12" BackgroundColor="#101820">
 
-        <!-- Header + Toggle + Add -->
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,*,Auto">
-            <Label Text="Issues" FontSize="22" FontAttributes="Bold" TextColor="White"/>
+        <!-- Title -->
+        <Label Grid.Row="0"
+               Text="Issues"
+               FontSize="22"
+               FontAttributes="Bold"
+               TextColor="White" />
 
-            <HorizontalStackLayout Grid.Column="1" Spacing="8" Margin="16,0,0,0">
-                <Button x:Name="ActiveBtn"  Text="Active"  Clicked="OnShowActive" />
-                <Button x:Name="HistoryBtn" Text="History" Clicked="OnShowHistory" />
-            </HorizontalStackLayout>
+        <!-- Tabs + Add -->
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8">
+            <Button x:Name="ActiveTabBtn"  Text="Active"  Clicked="OnShowActive" />
+            <Button x:Name="HistoryTabBtn" Text="History" Clicked="OnShowHistory" />
 
-            <Button Grid.Column="3" Text="Add Issue" HorizontalOptions="End" Clicked="OnAddIssueClicked" />
+            <Label Grid.Column="2"
+                   Text="Add • Edit • Resolve → History"
+                   TextColor="#93c5fd"
+                   HorizontalTextAlignment="End"
+                   VerticalTextAlignment="Center" />
+
+            <Button Grid.Column="3"
+                    Text="Add Issue"
+                    HorizontalOptions="End"
+                    Clicked="OnAddIssueClicked" />
         </Grid>
 
-        <!-- List -->
-        <CollectionView Grid.Row="1" x:Name="IssuesView" BackgroundColor="#0f1d2f" SelectionMode="None">
+        <!-- History bulk delete bar (only visible in History) -->
+        <Border Grid.Row="2"
+                x:Name="HistoryDeleteBar"
+                IsVisible="False"
+                BackgroundColor="#ef4444"
+                Stroke="#ef4444"
+                Padding="10,6"
+                StrokeThickness="1"
+                HorizontalOptions="End"
+                VerticalOptions="Center">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="6"/>
+            </Border.StrokeShape>
+            <HorizontalStackLayout Spacing="6">
+                <Label Text="Delete selected"
+                       TextColor="White"
+                       FontAttributes="Bold"/>
+            </HorizontalStackLayout>
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnDeleteSelectedHistoryTapped"/>
+            </Border.GestureRecognizers>
+        </Border>
+
+        <!-- ACTIVE LIST (full editable rows) -->
+        <CollectionView Grid.Row="3"
+                        x:Name="ActiveList"
+                        BackgroundColor="#0f1d2f"
+                        SelectionMode="None"
+                        IsVisible="True">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
+
                     <SwipeView>
                         <SwipeView.RightItems>
                             <SwipeItems Mode="Reveal">
-                                <SwipeItem Text="Resolve" BackgroundColor="#10b981" Invoked="OnResolveSwipe" />
-                                <SwipeItem Text="Delete"  BackgroundColor="#ef4444" Invoked="OnDeleteSwipe" />
+                                <SwipeItem Text="Resolve"
+                                           BackgroundColor="#10b981"
+                                           Invoked="OnResolveSwipe" />
+                                <SwipeItem Text="Delete"
+                                           BackgroundColor="#ef4444"
+                                           Invoked="OnDeleteActiveSwipe" />
                             </SwipeItems>
                         </SwipeView.RightItems>
 
-                        <Grid Padding="10" ColumnSpacing="12"
-                              ColumnDefinitions="2*,Auto,Auto"
-                              RowDefinitions="Auto,Auto,Auto,Auto">
+                        <!-- Row layout -->
+                        <Grid Padding="10"
+                              ColumnSpacing="12"
+                              RowDefinitions="Auto,Auto,Auto"
+                              ColumnDefinitions="2*,Auto,Auto">
 
-                            <!-- Title + Description (inline edit) -->
+                            <!-- Title & Description (inline edit) -->
                             <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
                                 <Entry x:Name="TitleEntry"
                                        Text="{Binding Title}"
-                                       Placeholder="Enter issue title (e.g., Dishwasher leak)"
+                                       Placeholder="Issue title"
                                        TextColor="White"
                                        Completed="OnTitleCompleted" />
 
@@ -71,17 +117,17 @@
                             </VerticalStackLayout>
 
                             <!-- Attempted steps -->
-                            <VerticalStackLayout Grid.Row="2" Grid.ColumnSpan="3" Spacing="2">
-                                <Label Text="Steps you tried before calling a pro:" TextColor="#93c5fd" FontSize="12" />
+                            <VerticalStackLayout Grid.Row="1" Grid.ColumnSpan="3" Spacing="2">
+                                <Label Text="Steps tried before calling a pro:" TextColor="#93c5fd" FontSize="12" />
                                 <Editor x:Name="AttemptedEditor"
                                         Text="{Binding AttemptedSteps}"
                                         TextColor="White"
-                                        Placeholder="e.g., reset GFCI, checked breaker, cleaned trap..."
+                                        Placeholder="e.g., reset GFCI, checked breaker..."
                                         Completed="OnAttemptedCompleted" />
                             </VerticalStackLayout>
 
                             <!-- Fix notes -->
-                            <VerticalStackLayout Grid.Row="3" Grid.ColumnSpan="3" Spacing="2">
+                            <VerticalStackLayout Grid.Row="2" Grid.ColumnSpan="3" Spacing="2">
                                 <Label Text="How it was fixed:" TextColor="#93c5fd" FontSize="12" />
                                 <Editor x:Name="FixEditor"
                                         Text="{Binding FixNotes}"
@@ -91,8 +137,71 @@
                             </VerticalStackLayout>
                         </Grid>
                     </SwipeView>
+
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+
+        <!-- HISTORY LIST (compact read-only rows + select/delete) -->
+        <CollectionView Grid.Row="3"
+                        x:Name="HistoryList"
+                        BackgroundColor="#0f1d2f"
+                        SelectionMode="None"
+                        IsVisible="False">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+
+                    <SwipeView>
+                        <SwipeView.RightItems>
+                            <SwipeItems Mode="Reveal">
+                                <SwipeItem Text="Delete"
+                                           BackgroundColor="#ef4444"
+                                           Invoked="OnDeleteHistorySwipe" />
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+
+                        <!-- Compact read-only row -->
+                        <Grid Padding="10"
+                              ColumnDefinitions="Auto,*,Auto"
+                              RowDefinitions="Auto,Auto"
+                              ColumnSpacing="12">
+
+                            <!-- Select for bulk delete -->
+                            <CheckBox CheckedChanged="OnHistorySelectChanged" />
+
+                            <!-- Title + Description (small, truncated) -->
+                            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                <Label Text="{Binding Title}"
+                                       TextColor="White"
+                                       FontSize="14"
+                                       LineBreakMode="TailTruncation"
+                                       MaxLines="1" />
+                                <Label Text="{Binding Description}"
+                                       TextColor="#cbd5e1"
+                                       FontSize="12"
+                                       LineBreakMode="TailTruncation"
+                                       MaxLines="2" />
+                                <Label Text="{Binding ResolvedOn, StringFormat='Resolved: {0:MMM d, yyyy}'}"
+                                       TextColor="#93c5fd"
+                                       FontSize="12" />
+                            </VerticalStackLayout>
+
+                            <!-- Per-row red Delete -->
+                            <Button Grid.Column="2"
+                                    BackgroundColor="#ef4444"
+                                    TextColor="White"
+                                    Padding="10,6"
+                                    CornerRadius="6"
+                                    Text="Delete"
+                                    Clicked="OnDeleteHistoryRowClicked"
+                                    HorizontalOptions="End"
+                                    VerticalOptions="Center"/>
+                        </Grid>
+                    </SwipeView>
+
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
     </Grid>
 </ContentPage>
