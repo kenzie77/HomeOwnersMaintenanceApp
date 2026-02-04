@@ -2,24 +2,91 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HomeMaintenanceApp.Pages.SeasonalPage"
-             Title="Seasonal Maintenance">
+             Title="Seasonal Maintenance"
+             BackgroundColor="#101820">
 
     <VerticalStackLayout Padding="12" Spacing="10" BackgroundColor="#101820">
 
         <!-- Tabs + top action buttons -->
-        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="6">
+        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="8">
 
-            <!-- Season tabs -->
-            <Grid Grid.Row="0" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="8">
-                <Button x:Name="SpringBtn"  Text="🌱 Spring"  Clicked="OnSpring"  />
-                <Button x:Name="SummerBtn"  Grid.Column="1" Text="☀️ Summer"  Clicked="OnSummer"  />
-                <Button x:Name="AutumnBtn"  Grid.Column="2" Text="🍂 Autumn"  Clicked="OnAutumn"  />
-                <Button x:Name="WinterBtn"  Grid.Column="3" Text="❄️ Winter"  Clicked="OnWinter"  />
-                <Button x:Name="PoolBtn"    Grid.Column="4" Text="🏊 Pool"    Clicked="OnPool"    />
+            <!-- Season tabs (2 rows, Pool moved to bottom) -->
+            <Grid Grid.Row="0"
+                  Grid.ColumnSpan="2"
+                  RowDefinitions="Auto,Auto"
+                  ColumnSpacing="8"
+                  RowSpacing="8">
+
+                <!-- Row 1: Spring/Summer/Autumn/Winter -->
+                <Grid Grid.Row="0"
+                      ColumnDefinitions="*,*,*,*"
+                      ColumnSpacing="8">
+
+                    <Button x:Name="SpringBtn"
+                            Text="🌱 Spring"
+                            Clicked="OnSpring"
+                            TextColor="White"
+                            FontSize="13"
+                            Padding="12,8"
+                            CornerRadius="10"
+                            BackgroundColor="#16a34a" />
+
+                    <Button x:Name="SummerBtn"
+                            Grid.Column="1"
+                            Text="☀️ Summer"
+                            Clicked="OnSummer"
+                            TextColor="White"
+                            FontSize="13"
+                            Padding="12,8"
+                            CornerRadius="10"
+                            BackgroundColor="#f59e0b" />
+
+                    <Button x:Name="AutumnBtn"
+                            Grid.Column="2"
+                            Text="🍂 Autumn"
+                            Clicked="OnAutumn"
+                            TextColor="White"
+                            FontSize="13"
+                            Padding="12,8"
+                            CornerRadius="10"
+                            BackgroundColor="#f97316" />
+
+                    <Button x:Name="WinterBtn"
+                            Grid.Column="3"
+                            Text="❄️ Winter"
+                            Clicked="OnWinter"
+                            TextColor="White"
+                            FontSize="13"
+                            Padding="12,8"
+                            CornerRadius="10"
+                            BackgroundColor="#38bdf8" />
+                </Grid>
+
+                <!-- Row 2: Pool (under Spring/Summer area) -->
+                <Grid Grid.Row="1"
+                      ColumnDefinitions="*,*,*,*"
+                      ColumnSpacing="8">
+
+                    <Button x:Name="PoolBtn"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="2"
+                            Text="🏊 Pool"
+                            Clicked="OnPool"
+                            TextColor="White"
+                            FontSize="13"
+                            Padding="12,8"
+                            CornerRadius="10"
+                            BackgroundColor="#6366f1"
+                            HorizontalOptions="Fill" />
+                </Grid>
             </Grid>
 
             <!-- Top action buttons: Restore defaults + Restart all done + Delete selected -->
-            <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="8" HorizontalOptions="End">
+            <Grid Grid.Row="1"
+                  Grid.ColumnSpan="2"
+                  ColumnDefinitions="Auto,Auto,Auto"
+                  ColumnSpacing="8"
+                  HorizontalOptions="End">
 
                 <!-- Indigo Restore Defaults (Border + Tap) -->
                 <Border x:Name="RestoreDefaultsPanel"
@@ -34,7 +101,9 @@
                     <HorizontalStackLayout Spacing="6">
                         <Label Text="Restore defaults"
                                TextColor="White"
-                               FontAttributes="Bold"/>
+                               FontAttributes="Bold"
+                               FontSize="12"
+                               LineBreakMode="NoWrap"/>
                     </HorizontalStackLayout>
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnRestoreDefaultsTapped"/>
@@ -54,7 +123,9 @@
                     <HorizontalStackLayout Spacing="6">
                         <Label Text="Restart all done"
                                TextColor="White"
-                               FontAttributes="Bold"/>
+                               FontAttributes="Bold"
+                               FontSize="12"
+                               LineBreakMode="NoWrap"/>
                     </HorizontalStackLayout>
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnRestartAllDoneTapped"/>
@@ -74,7 +145,9 @@
                     <HorizontalStackLayout Spacing="6">
                         <Label Text="Delete selected"
                                TextColor="White"
-                               FontAttributes="Bold"/>
+                               FontAttributes="Bold"
+                               FontSize="12"
+                               LineBreakMode="NoWrap"/>
                     </HorizontalStackLayout>
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnDeleteSelectedTapped"/>
@@ -90,14 +163,22 @@
                 <RoundRectangle CornerRadius="8"/>
             </Border.StrokeShape>
 
-            <Grid ColumnDefinitions="*,Auto" Padding="12">
+            <Grid ColumnDefinitions="*,Auto" Padding="12" ColumnSpacing="10">
                 <Entry x:Name="NewItemEntry"
                        Placeholder="Add a checklist item..."
+                       PlaceholderColor="#cbd5e1"
                        TextColor="White"
                        BackgroundColor="#0f1d2f"
-                       HorizontalOptions="Fill"/>
+                       HorizontalOptions="Fill"
+                       HeightRequest="44"/>
+
                 <Button Grid.Column="1"
                         Text="Add"
+                        TextColor="White"
+                        FontSize="14"
+                        Padding="14,8"
+                        CornerRadius="10"
+                        BackgroundColor="#2563eb"
                         Clicked="OnAddItem"/>
             </Grid>
         </Border>
@@ -106,7 +187,9 @@
         <CollectionView x:Name="SeasonList"
                         BackgroundColor="#0f1d2f"
                         SelectionMode="None"
-                        ItemsLayout="VerticalList">
+                        ItemsLayout="VerticalList"
+                        ItemSizingStrategy="MeasureAllItems">
+
             <CollectionView.ItemTemplate>
                 <DataTemplate>
 
@@ -130,16 +213,24 @@
                               ColumnDefinitions="Auto,*,Auto,Auto"
                               ColumnSpacing="12">
 
-                            <!-- DONE checkbox (marks complete, greys out, shows date) -->
+                            <!-- DONE checkbox -->
                             <CheckBox IsChecked="{Binding IsDone}"
+                                      Color="#60a5fa"
                                       CheckedChanged="OnDoneChanged" />
 
                             <!-- Text + date -->
                             <VerticalStackLayout Grid.Column="1" Spacing="2">
-                                <Label Text="{Binding Text}">
+
+                                <!-- Make wording visible (white by default) -->
+                                <Label Text="{Binding Text}"
+                                       TextColor="White"
+                                       FontSize="14"
+                                       LineBreakMode="WordWrap">
                                     <Label.Triggers>
                                         <!-- Grey out when done -->
-                                        <DataTrigger TargetType="Label" Binding="{Binding IsDone}" Value="True">
+                                        <DataTrigger TargetType="Label"
+                                                     Binding="{Binding IsDone}"
+                                                     Value="True">
                                             <Setter Property="TextColor" Value="#9ca3af"/>
                                             <Setter Property="Opacity"   Value="0.7"/>
                                         </DataTrigger>
@@ -151,19 +242,22 @@
                                        FontSize="12"
                                        TextColor="#93c5fd"
                                        IsVisible="{Binding IsDone}"/>
+
                             </VerticalStackLayout>
 
                             <!-- SELECT checkbox (for bulk delete) -->
                             <CheckBox Grid.Column="2"
                                       IsChecked="{Binding IsSelected}"
+                                      Color="#22c55e"
                                       CheckedChanged="OnSelectChanged"/>
 
                             <!-- Per-row red Delete -->
                             <Button Grid.Column="3"
                                     BackgroundColor="#ef4444"
                                     TextColor="White"
-                                    Padding="10,6"
-                                    CornerRadius="6"
+                                    Padding="12,6"
+                                    CornerRadius="8"
+                                    FontSize="13"
                                     Text="Delete"
                                     Clicked="OnDeleteRowClicked"
                                     HorizontalOptions="End"
@@ -177,7 +271,9 @@
 
         <!-- Tip -->
         <Label Text="Tip: Check the first box to mark done (date shown &amp; greyed out). Uncheck or swipe Restart to re-activate. Use the second box to select items for bulk delete; tap text to edit; swipe → Edit/Restart/Delete; per‑row Delete removes one. Done items auto‑restart after 30 days."
-               TextColor="#9ca3af"
+               TextColor="White"
+               Opacity="0.75"
                FontSize="12"/>
+
     </VerticalStackLayout>
 </ContentPage>

@@ -2,22 +2,27 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HomeMaintenanceApp.Pages.OnboardingPage"
-             Title="Welcome">
+             Title="Welcome"
+             BackgroundColor="#101820">
 
+    <!-- FIX: Removed KeyboardDismissMode (not supported in your MAUI version) -->
     <ScrollView>
         <VerticalStackLayout Padding="12" Spacing="12" BackgroundColor="#101820">
 
             <!-- Header -->
-            <Grid ColumnDefinitions="Auto,*">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
                 <Label Text="Welcome"
                        FontSize="22"
                        FontAttributes="Bold"
-                       TextColor="White"/>
+                       TextColor="White"
+                       VerticalOptions="Center"/>
+
                 <Label Grid.Column="1"
                        Text="Set your property details or reset test data"
                        TextColor="#93c5fd"
                        HorizontalTextAlignment="End"
-                       VerticalTextAlignment="Center"/>
+                       VerticalTextAlignment="Center"
+                       LineBreakMode="TailTruncation"/>
             </Grid>
 
             <!-- Current property summary -->
@@ -31,7 +36,11 @@
                            TextColor="White"
                            FontAttributes="Bold"/>
 
-                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="4">
+                    <Grid ColumnDefinitions="Auto,*"
+                          RowDefinitions="Auto,Auto,Auto"
+                          ColumnSpacing="8"
+                          RowSpacing="4">
+
                         <Label Grid.Row="0" Grid.Column="0" Text="Address:" TextColor="#93c5fd"/>
                         <Label Grid.Row="0" Grid.Column="1" x:Name="AddressLabel" Text="-" TextColor="White"/>
 
@@ -44,22 +53,59 @@
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Onboarding inputs (keep these aligned with your actual controls) -->
+            <!-- Onboarding inputs -->
             <Border BackgroundColor="#1F2937" Stroke="#334155" Padding="12">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="8"/>
                 </Border.StrokeShape>
 
                 <VerticalStackLayout Spacing="10">
-                    <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*" RowSpacing="10" ColumnSpacing="12">
-                        <Label Grid.Row="0" Grid.Column="0" Text="Address" TextColor="White"/>
-                        <Entry  Grid.Row="0" Grid.Column="1" x:Name="AddressEntry" Placeholder="e.g., 123 Main St" TextColor="White" />
+                    <Grid RowDefinitions="Auto,Auto,Auto"
+                          ColumnDefinitions="Auto,*"
+                          RowSpacing="10"
+                          ColumnSpacing="12">
 
-                        <Label Grid.Row="1" Grid.Column="0" Text="Has Pool" TextColor="White"/>
-                        <Switch Grid.Row="1" Grid.Column="1" x:Name="HasPoolSwitch" />
+                        <Label Grid.Row="0" Grid.Column="0"
+                               Text="Address"
+                               TextColor="White"
+                               VerticalOptions="Center"/>
 
-                        <Label Grid.Row="2" Grid.Column="0" Text="Trash Day" TextColor="White"/>
-                        <Picker Grid.Row="2" Grid.Column="1" x:Name="TrashDayPicker">
+                        <!-- FIX: Make typing visible on iOS -->
+                        <Entry Grid.Row="0" Grid.Column="1"
+                               x:Name="AddressEntry"
+                               Placeholder="e.g., 123 Main St"
+                               BackgroundColor="#0f1d2f"
+                               TextColor="White"
+                               PlaceholderColor="#cbd5e1"
+                               HeightRequest="44"
+                               ClearButtonVisibility="WhileEditing"
+                               ReturnType="Done"/>
+
+                        <Label Grid.Row="1" Grid.Column="0"
+                               Text="Has Pool"
+                               TextColor="White"
+                               VerticalOptions="Center"/>
+
+                        <Switch Grid.Row="1" Grid.Column="1"
+                                x:Name="HasPoolSwitch"
+                                OnColor="#22c55e"
+                                ThumbColor="White"
+                                HorizontalOptions="Start"
+                                VerticalOptions="Center"/>
+
+                        <Label Grid.Row="2" Grid.Column="0"
+                               Text="Trash Day"
+                               TextColor="White"
+                               VerticalOptions="Center"/>
+
+                        <!-- FIX: Picker readable on dark background -->
+                        <Picker Grid.Row="2" Grid.Column="1"
+                                x:Name="TrashDayPicker"
+                                BackgroundColor="#0f1d2f"
+                                TextColor="White"
+                                Title="Select a day"
+                                TitleColor="#cbd5e1"
+                                HeightRequest="44">
                             <Picker.Items>
                                 <x:String>Sunday</x:String>
                                 <x:String>Monday</x:String>
@@ -71,21 +117,24 @@
                                 <x:String>(not set)</x:String>
                             </Picker.Items>
                         </Picker>
+
                     </Grid>
 
                     <HorizontalStackLayout Spacing="8" Margin="0,12,0,0">
                         <Button Text="Save"
                                 BackgroundColor="#0ea5e9"
                                 TextColor="White"
+                                Padding="14,10"
+                                CornerRadius="10"
                                 Clicked="OnSavePropertyClicked"/>
                     </HorizontalStackLayout>
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Reset tools (no new page; lives right in Onboarding) -->
+            <!-- Reset tools -->
             <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
 
-                <!-- Reset Property (address, pool, trash day) -->
+                <!-- Reset Property -->
                 <Border Grid.Column="0"
                         BackgroundColor="#14b8a6"
                         Stroke="#14b8a6"
@@ -99,15 +148,18 @@
                                TextColor="White"
                                FontAttributes="Bold"/>
                         <Label Text="Clears Address, Has Pool, and Trash Day (handy for removing test values)."
-                               TextColor="#e5e7eb"/>
+                               TextColor="#e5e7eb"
+                               LineBreakMode="WordWrap"/>
                         <Button Text="Reset Property"
                                 BackgroundColor="#0ea5e9"
                                 TextColor="White"
+                                Padding="14,10"
+                                CornerRadius="10"
                                 Clicked="OnResetPropertyClicked"/>
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Reset ALL (factory reset) -->
+                <!-- Reset ALL -->
                 <Border Grid.Column="1"
                         BackgroundColor="#ef4444"
                         Stroke="#ef4444"
@@ -121,10 +173,13 @@
                                TextColor="White"
                                FontAttributes="Bold"/>
                         <Label Text="Factory reset: clears Tasks, Issues+History, Seasonal/Pool/Hurricane lists, Knowledge notes, and Property."
-                               TextColor="#fde68a"/>
+                               TextColor="#fde68a"
+                               LineBreakMode="WordWrap"/>
                         <Button Text="Reset ALL Data"
                                 BackgroundColor="#dc2626"
                                 TextColor="White"
+                                Padding="14,10"
+                                CornerRadius="10"
                                 Clicked="OnResetAllClicked"/>
                     </VerticalStackLayout>
                 </Border>

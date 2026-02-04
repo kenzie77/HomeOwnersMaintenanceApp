@@ -2,121 +2,192 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HomeMaintenanceApp.Pages.TaskPage"
-             Title="Tasks">
+             Title="Tasks"
+             BackgroundColor="#101820">
 
-    <Grid RowDefinitions="Auto,*" Padding="12" BackgroundColor="#101820">
+    <Grid RowDefinitions="Auto,*" Padding="12" RowSpacing="10">
 
-        <!-- Header & Add -->
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
-            <Label Text="Tasks" FontSize="22" FontAttributes="Bold" TextColor="White"/>
-            <Button Text="Add Task" Grid.Column="1" HorizontalOptions="End" Clicked="OnAddTaskClicked" />
+        <!-- Header -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" VerticalOptions="Center">
+            <Label Text="Tasks"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   TextColor="White"
+                   VerticalOptions="Center"/>
+
+            <Button Text="Add Task"
+                    Grid.Column="1"
+                    HorizontalOptions="End"
+                    VerticalOptions="Center"
+                    Padding="12,6"
+                    CornerRadius="10"
+                    FontSize="14"
+                    Clicked="OnAddTaskClicked"/>
         </Grid>
 
-        <!-- Task list (editable in-place) -->
-        <CollectionView Grid.Row="1" x:Name="TaskList" BackgroundColor="#0f1d2f" SelectionMode="None">
+        <!-- Task list -->
+        <CollectionView Grid.Row="1"
+                        x:Name="TaskList"
+                        BackgroundColor="#0f1d2f"
+                        SelectionMode="None"
+                        ItemSizingStrategy="MeasureAllItems">
+
             <CollectionView.ItemTemplate>
                 <DataTemplate>
 
-                    <!-- Swipe: Complete / Delete -->
                     <SwipeView>
                         <SwipeView.RightItems>
                             <SwipeItems Mode="Reveal">
-                                <SwipeItem Text="Complete" BackgroundColor="#10b981" Invoked="OnCompleteSwipe" />
-                                <SwipeItem Text="Delete"   BackgroundColor="#ef4444" Invoked="OnDeleteSwipe" />
+                                <SwipeItem Text="Complete"
+                                           BackgroundColor="#10b981"
+                                           Invoked="OnCompleteSwipe" />
+                                <SwipeItem Text="Delete"
+                                           BackgroundColor="#ef4444"
+                                           Invoked="OnDeleteSwipe" />
                             </SwipeItems>
                         </SwipeView.RightItems>
 
-                        <!-- Row layout -->
-                        <Grid Padding="10" ColumnSpacing="12"
-                              ColumnDefinitions="2*,Auto,Auto,Auto"
-                              RowDefinitions="Auto,Auto,Auto">
+                        <!-- Card -->
+                        <Frame BackgroundColor="#374151"
+                               BorderColor="#1f2a3a"
+                               CornerRadius="14"
+                               Padding="12"
+                               Margin="0,6"
+                               HasShadow="False">
 
-                            <!-- Title & Description -->
-                            <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="2">
-                                <Label Text="{Binding Title}" TextColor="White" FontAttributes="Bold" />
-                                <Label Text="{Binding Description}" TextColor="#e5e7eb" FontSize="12" />
-                            </VerticalStackLayout>
+                            <Grid RowDefinitions="Auto,Auto,Auto"
+                                  RowSpacing="10">
 
-                            <!-- Priority (inline picker) -->
-                            <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="2" HorizontalOptions="Center">
-                                <Label Text="Priority" TextColor="#93c5fd" FontSize="12" />
-                                <Picker Title="Priority"
-                                        WidthRequest="120"
-                                        SelectedIndexChanged="OnPriorityChanged">
-                                    <Picker.Items>
-                                        <x:String>Low</x:String>
-                                        <x:String>Medium</x:String>
-                                        <x:String>High</x:String>
-                                        <x:String>Critical</x:String>
-                                    </Picker.Items>
-                                </Picker>
-                            </VerticalStackLayout>
+                                <!-- Title + Description -->
+                                <VerticalStackLayout Grid.Row="0" Spacing="3">
+                                    <Label Text="{Binding Title}"
+                                           TextColor="White"
+                                           FontAttributes="Bold"
+                                           FontSize="17"
+                                           LineBreakMode="TailTruncation"/>
 
-                            <!-- Status (inline picker) -->
-                            <VerticalStackLayout Grid.Row="0" Grid.Column="2" Spacing="2" HorizontalOptions="Center">
-                                <Label Text="Status" TextColor="#93c5fd" FontSize="12" />
-                                <Picker Title="Status"
-                                        WidthRequest="130"
-                                        SelectedIndexChanged="OnStatusChanged">
-                                    <Picker.Items>
-                                        <x:String>NotStarted</x:String>
-                                        <x:String>InProgress</x:String>
-                                        <x:String>Completed</x:String>
-                                        <x:String>Deferred</x:String>
-                                    </Picker.Items>
-                                </Picker>
-                            </VerticalStackLayout>
+                                    <Label Text="{Binding Description}"
+                                           TextColor="#e5e7eb"
+                                           FontSize="13"
+                                           LineBreakMode="WordWrap"/>
+                                </VerticalStackLayout>
 
-                            <!-- Due date -->
-                            <VerticalStackLayout Grid.Row="0" Grid.Column="3" Spacing="2" HorizontalOptions="End">
-                                <Label Text="Due" TextColor="#93c5fd" FontSize="12" HorizontalTextAlignment="End" />
-                                <DatePicker Date="{Binding DueDate}" DateSelected="OnDueDateSelected" />
-                            </VerticalStackLayout>
+                                <!-- Controls (responsive) -->
+                                <Grid Grid.Row="1"
+                                      ColumnDefinitions="*,*"
+                                      RowDefinitions="Auto,Auto"
+                                      ColumnSpacing="10"
+                                      RowSpacing="8">
 
-                            <!-- Row actions (Start / Done + hints) -->
-                            <HorizontalStackLayout Grid.Row="1" Grid.ColumnSpan="4" Spacing="8">
-                                <Button Text="Start"
-                                        BackgroundColor="#3b82f6"
-                                        TextColor="White"
-                                        Clicked="OnStartClicked" />
+                                    <!-- Priority -->
+                                    <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="2">
+                                        <Label Text="Priority"
+                                               TextColor="#93c5fd"
+                                               FontSize="11"/>
+                                        <Picker Title="Priority"
+                                                FontSize="14"
+                                                HeightRequest="45"
+                                                TextColor="White"
+                                                SelectedIndexChanged="OnPriorityChanged">
+                                            <Picker.Items>
+                                                <x:String>Low</x:String>
+                                                <x:String>Medium</x:String>
+                                                <x:String>High</x:String>
+                                                <x:String>Critical</x:String>
+                                            </Picker.Items>
+                                        </Picker>
+                                    </VerticalStackLayout>
 
-                                <Button Text="Done"
-                                        BackgroundColor="#10b981"
-                                        TextColor="White"
-                                        Clicked="OnDoneClicked" />
+                                    <!-- Status -->
+                                    <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="2">
+                                        <Label Text="Status"
+                                               TextColor="#93c5fd"
+                                               FontSize="11"/>
+                                        <Picker Title="Status"
+                                                FontSize="14"
+                                                HeightRequest="45"
+                                                TextColor="White"
+                                                SelectedIndexChanged="OnStatusChanged">
+                                            <Picker.Items>
+                                                <x:String>NotStarted</x:String>
+                                                <x:String>InProgress</x:String>
+                                                <x:String>Completed</x:String>
+                                                <x:String>Deferred</x:String>
+                                            </Picker.Items>
+                                        </Picker>
+                                    </VerticalStackLayout>
 
-                                <!-- Recurrence + next due hint -->
-                                <Label Text="{Binding Recurrence}"
-                                       TextColor="#e5e7eb"
+                                    <!-- Due Date -->
+                                    <VerticalStackLayout Grid.Row="1" Grid.ColumnSpan="2" Spacing="2">
+                                        <Label Text="Due Date"
+                                               TextColor="#93c5fd"
+                                               FontSize="11"/>
+                                        <DatePicker Date="{Binding DueDate}"
+                                                    FontSize="14"
+                                                    HeightRequest="45"
+                                                    TextColor="White"
+                                                    DateSelected="OnDueDateSelected"/>
+                                    </VerticalStackLayout>
+
+                                </Grid>
+
+                                <!-- Actions row -->
+                                <Grid Grid.Row="2" ColumnDefinitions="Auto,Auto,*" ColumnSpacing="10" RowSpacing="6">
+
+                                    <Button Text="Start"
+                                            BackgroundColor="#3b82f6"
+                                            TextColor="White"
+                                            Padding="12,6"
+                                            CornerRadius="10"
+                                            FontSize="14"
+                                            Clicked="OnStartClicked"/>
+
+                                    <Button Text="Done"
+                                            Grid.Column="1"
+                                            BackgroundColor="#10b981"
+                                            TextColor="White"
+                                            Padding="12,6"
+                                            CornerRadius="10"
+                                            FontSize="14"
+                                            Clicked="OnDoneClicked"/>
+
+                                    <VerticalStackLayout Grid.Column="2" Spacing="2">
+                                        <Label Text="{Binding Recurrence}"
+                                               TextColor="#e5e7eb"
+                                               FontSize="13"
+                                               LineBreakMode="TailTruncation"/>
+
+                                        <Label Text="{Binding DueDate, StringFormat='Next due: {0:MMM d, yyyy}'}"
+                                               TextColor="#cbd5e1"
+                                               FontSize="13"
+                                               LineBreakMode="TailTruncation"/>
+                                    </VerticalStackLayout>
+
+                                </Grid>
+
+                                <!-- Completed date (hidden if null) -->
+                                <Label Grid.Row="3"
+                                       Text="{Binding LastCompletedOn, StringFormat='Completed: {0:MMM d, yyyy}'}"
+                                       TextColor="#93c5fd"
                                        FontSize="12"
-                                       HorizontalOptions="Start" />
+                                       IsVisible="True">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label"
+                                                     Binding="{Binding LastCompletedOn}"
+                                                     Value="{x:Null}">
+                                            <Setter Property="IsVisible" Value="False" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
 
-                                <Label Text="{Binding DueDate, StringFormat='Next due: {0:MMM d, yyyy}'}"
-                                       TextColor="#cbd5e1"
-                                       FontSize="12"
-                                       HorizontalOptions="EndAndExpand" />
-                            </HorizontalStackLayout>
-
-                            <!-- Completed date line -->
-                            <Label Grid.Row="2" Grid.ColumnSpan="4"
-                                   Text="{Binding LastCompletedOn, StringFormat='Completed: {0:MMM d, yyyy}'}"
-                                   TextColor="#93c5fd"
-                                   FontSize="12">
-                                <Label.Triggers>
-                                    <!-- Hide when LastCompletedOn is null -->
-                                    <DataTrigger TargetType="Label"
-                                                 Binding="{Binding LastCompletedOn}"
-                                                 Value="{x:Null}">
-                                        <Setter Property="IsVisible" Value="False" />
-                                    </DataTrigger>
-                                </Label.Triggers>
-                            </Label>
-
-                        </Grid>
+                            </Grid>
+                        </Frame>
                     </SwipeView>
 
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+
     </Grid>
 </ContentPage>
+

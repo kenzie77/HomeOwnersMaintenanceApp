@@ -4,48 +4,67 @@
              x:Class="HomeMaintenanceApp.Pages.HurricanePage"
              Title="Hurricane Prep">
 
-    <VerticalStackLayout Padding="12" Spacing="8" BackgroundColor="#101820">
+    <VerticalStackLayout Padding="12" Spacing="12" BackgroundColor="#101820">
 
-        <!-- Header + top red delete (Border + Tap gesture) -->
-        <Grid ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center">
+        <!-- ===== HEADER AREA (FIXED: no overlap, no running into each other) ===== -->
+        <FlexLayout Direction="Row"
+                    Wrap="Wrap"
+                    AlignItems="Center"
+                    JustifyContent="SpaceBetween"
+                    ColumnSpacing="10"
+                    RowSpacing="6">
+
+            <!-- Left: Title -->
             <Label Text="Hurricane preparedness checklist"
                    FontSize="20"
                    FontAttributes="Bold"
-                   TextColor="White"/>
+                   TextColor="White"
+                   FlexLayout.Grow="1"
+                   LineBreakMode="NoWrap" />
 
-            <Label Grid.Column="1"
-                   Text="Add • Edit • Delete"
+            <!-- Center tagline -->
+            <Label Text="Add • Edit • Delete"
                    TextColor="#93c5fd"
-                   HorizontalTextAlignment="Center"
-                   VerticalTextAlignment="Center"/>
+                   FontSize="13"
+                   LineBreakMode="NoWrap"
+                   VerticalOptions="Center"
+                   FlexLayout.Grow="0" />
 
-            <!-- RED Delete Selected faux-button -->
-            <Border Grid.Column="2"
-                    x:Name="DeleteSelectedPanel"
+            <!-- Right: Delete Selected Button -->
+            <Border x:Name="DeleteSelectedPanel"
                     BackgroundColor="#ef4444"
                     Stroke="#ef4444"
                     Padding="10,6"
                     StrokeThickness="1"
-                    HorizontalOptions="End"
                     VerticalOptions="Center">
+
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="6"/>
                 </Border.StrokeShape>
+
                 <HorizontalStackLayout Spacing="6">
-                    <!-- Optional icon; if trash.png not present, only text will show -->
+
                     <Image Source="trash.png"
                            HeightRequest="18"
                            WidthRequest="18"
                            Aspect="AspectFit"/>
+
                     <Label Text="Delete Selected"
                            TextColor="White"
-                           FontAttributes="Bold"/>
+                           FontAttributes="Bold"
+                           FontSize="13"
+                           LineBreakMode="NoWrap"/>
                 </HorizontalStackLayout>
+
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnDeleteSelectedTapped"/>
                 </Border.GestureRecognizers>
+
             </Border>
-        </Grid>
+
+        </FlexLayout>
+        <!-- ===== END HEADER FIX ===== -->
+
 
         <!-- Add new item row -->
         <Border BackgroundColor="#1F2937" Stroke="#334155">
@@ -57,33 +76,40 @@
                 <Entry x:Name="NewHItemEntry"
                        Placeholder="Add a checklist item..."
                        TextColor="White"
+                       PlaceholderColor="#cbd5e1"
                        BackgroundColor="#0f1d2f"
-                       HorizontalOptions="Fill"/>
+                       HorizontalOptions="Fill" />
+
                 <Button Grid.Column="1"
                         Text="Add"
+                        BackgroundColor="#2563eb"
+                        TextColor="White"
+                        Padding="12,6"
+                        CornerRadius="8"
                         Clicked="OnAddHItem"/>
             </Grid>
         </Border>
+
 
         <!-- Checklist list -->
         <CollectionView x:Name="HList"
                         BackgroundColor="#0f1d2f"
                         SelectionMode="None"
                         ItemsLayout="VerticalList">
+
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-
                     <SwipeView>
+
                         <SwipeView.RightItems>
                             <SwipeItems Mode="Reveal">
-                                <!-- Edit item -->
                                 <SwipeItem Text="Edit"
                                            BackgroundColor="#3b82f6"
-                                           Invoked="OnEditSwipe"/>
-                                <!-- Delete item -->
+                                           Invoked="OnEditSwipe" />
+
                                 <SwipeItem Text="Delete"
                                            BackgroundColor="#ef4444"
-                                           Invoked="OnDeleteSwipe"/>
+                                           Invoked="OnDeleteSwipe" />
                             </SwipeItems>
                         </SwipeView.RightItems>
 
@@ -92,39 +118,46 @@
                               ColumnDefinitions="Auto,*,Auto"
                               ColumnSpacing="12">
 
-                            <!-- Check to select for top deletion -->
+                            <!-- Checkbox -->
                             <CheckBox IsChecked="{Binding IsSelected}"
+                                      Color="#60a5fa"
                                       CheckedChanged="OnRowSelectedChanged" />
 
-                            <!-- Tap to edit -->
+                            <!-- Text (tap to edit) -->
                             <Label Grid.Column="1"
                                    Text="{Binding Text}"
-                                   TextColor="White">
+                                   TextColor="White"
+                                   LineBreakMode="WordWrap">
                                 <Label.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnRowTapped"/>
+                                    <TapGestureRecognizer Tapped="OnRowTapped" />
                                 </Label.GestureRecognizers>
                             </Label>
 
-                            <!-- Per-row red Delete button (single delete) -->
+                            <!-- Per-row Delete -->
                             <Button Grid.Column="2"
                                     BackgroundColor="#ef4444"
                                     TextColor="White"
                                     Padding="10,6"
                                     CornerRadius="6"
+                                    FontSize="13"
                                     Text="Delete"
                                     Clicked="OnDeleteRowClicked"
                                     HorizontalOptions="End"
-                                    VerticalOptions="Center"/>
-                        </Grid>
-                    </SwipeView>
+                                    VerticalOptions="Center" />
 
+                        </Grid>
+
+                    </SwipeView>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
 
+
         <!-- Tip -->
         <Label Text="Tip: Check items then tap the red Delete Selected button; tap text to edit; swipe → Edit/Delete; per-row red Delete removes one."
                TextColor="#9ca3af"
-               FontSize="12"/>
+               FontSize="12"
+               LineBreakMode="WordWrap" />
+
     </VerticalStackLayout>
 </ContentPage>

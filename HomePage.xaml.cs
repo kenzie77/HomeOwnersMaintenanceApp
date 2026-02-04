@@ -1,4 +1,3 @@
-
 using System;
 using System.Linq;
 using Microsoft.Maui.Controls;
@@ -84,18 +83,75 @@ namespace HomeMaintenanceApp.Pages
 
         /// <summary>
         /// Builds and binds the "Due soon" items.
+        /// Fixes:
+        ///  - HVAC Filter due date matches vinegar/condensate task
+        ///  - Removes duplicates like "New Task" showing twice
+        ///  - Hides "paint chips" from Home screen list
+        ///  - Ensures "Due today" shows on the correct day
         /// </summary>
         private void LoadDueSoon()
         {
-            var items = _manager.Tasks
-                .Where(t => t.DueDate.HasValue && t.Status != ModelsTaskStatus.Completed)
+            // --- Find the vinegar/condensate task due date (used to sync HVAC filter) ---
+            DateTime? vinegarDue = _manager.Tasks
+                .Where(t => t.Status != ModelsTaskStatus.Completed && t.DueDate.HasValue)
+                .Where(t =>
+                    !string.IsNullOrWhiteSpace(t.Title) &&
+                    (t.Title.Contains("vinegar", StringComparison.OrdinalIgnoreCase) ||
+                     t.Title.Contains("condensate", StringComparison.OrdinalIgnoreCase)))
                 .OrderBy(t => t.DueDate)
-                .Take(10)
-                .Select(t => new DueSoonItem
+                .Select(t => t.DueDate!.Value.Date)
+                .FirstOrDefault();
+
+            // Local function: compute the due date we want to SHOW on Home (doesn't change stored data)
+            DateTime? EffectiveDueDate(HomeMaintenanceApp.Models.MaintenanceTask t)
+            {
+                if (!t.DueDate.HasValue) return null;
+
+                // If this is the HVAC filter task and we have a vinegar due date, use it
+                if (vinegarDue.HasValue &&
+                    !string.IsNullOrWhiteSpace(t.Title) &&
+                    (t.Title.Contains("hvac filter", StringComparison.OrdinalIgnoreCase) ||
+                     t.Title.Contains("change hvac filter", StringComparison.OrdinalIgnoreCase) ||
+                     t.Title.Contains("air filter", StringComparison.OrdinalIgnoreCase)))
                 {
-                    Title = t.Title,
-                    DueTag = BuildDueTag(t.DueDate!.Value),
-                    DueColor = DueColor(t.DueDate!.Value)
+                    return vinegarDue.Value;
+                }
+
+                return t.DueDate.Value.Date;
+            }
+
+            var items = _manager.Tasks
+                // only tasks with due dates that aren't completed
+                .Where(t => t.Status != ModelsTaskStatus.Completed)
+                .Select(t => new
+                {
+                    Task = t,
+                    Due = EffectiveDueDate(t)
+                })
+                .Where(x => x.Due.HasValue)
+
+                // --- Remove "paint chips" from the Home screen list ---
+                .Where(x => !(x.Task.Title ?? "")
+                    .Contains("paint chip", StringComparison.OrdinalIgnoreCase))
+
+                // --- Remove duplicates (Title + DueDate) e.g., "New Task" showing twice ---
+                .GroupBy(x => new
+                {
+                    Title = (x.Task.Title ?? "").Trim().ToLowerInvariant(),
+                    DueDate = x.Due!.Value.Date
+                })
+                .Select(g => g.First())
+
+                // sort + take top 10
+                .OrderBy(x => x.Due)
+                .Take(10)
+
+                // build DTO for binding
+                .Select(x => new DueSoonItem
+                {
+                    Title = x.Task.Title,
+                    DueTag = BuildDueTag(x.Due!.Value),
+                    DueColor = DueColor(x.Due!.Value)
                 })
                 .ToList();
 

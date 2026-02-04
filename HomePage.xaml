@@ -17,52 +17,67 @@
         </Border>
 
         <!-- KPI bar -->
-        <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*"
-              Padding="8" BackgroundColor="#1F2937" Margin="0,0,0,8">
+        <Grid Grid.Row="1"
+              ColumnDefinitions="*,*,*,*"
+              Padding="8"
+              BackgroundColor="#1F2937"
+              Margin="0,0,0,8">
             <VerticalStackLayout>
                 <Label Text="Active" TextColor="Lime" FontAttributes="Bold" />
                 <Label x:Name="ActiveCount" Text="0" TextColor="White" FontSize="26" FontAttributes="Bold" />
             </VerticalStackLayout>
+
             <VerticalStackLayout Grid.Column="1">
                 <Label Text="Overdue" TextColor="#ff5252" FontAttributes="Bold" />
                 <Label x:Name="OverdueCount" Text="0" TextColor="White" FontSize="26" FontAttributes="Bold" />
             </VerticalStackLayout>
+
             <VerticalStackLayout Grid.Column="2">
-                <Label Text="Critical appliances" TextColor="#ffd700" FontAttributes="Bold" />
+                <Label Text="Critical Appliances" TextColor="#ffd700" FontAttributes="Bold" />
                 <Label x:Name="CriticalCount" Text="0" TextColor="White" FontSize="26" FontAttributes="Bold" />
             </VerticalStackLayout>
+
             <VerticalStackLayout Grid.Column="3">
                 <Label Text="Issues" TextColor="#00bfff" FontAttributes="Bold" />
                 <Label x:Name="IssuesCount" Text="0" TextColor="White" FontSize="26" FontAttributes="Bold" />
             </VerticalStackLayout>
         </Grid>
 
-
         <!-- Address + Pool badge + Trash day -->
         <VerticalStackLayout Grid.Row="2" Spacing="4" Margin="0,0,0,8">
             <HorizontalStackLayout Spacing="8">
                 <Label x:Name="AddressLabel" TextColor="White" />
-                <Border x:Name="PoolBadge" BackgroundColor="#0a7" Padding="6" StrokeShape="RoundRectangle 6" IsVisible="False">
+                <Border x:Name="PoolBadge"
+                        BackgroundColor="#0a7"
+                        Padding="6"
+                        StrokeShape="RoundRectangle 6"
+                        IsVisible="False">
                     <Label Text="Pool" TextColor="White" />
                 </Border>
             </HorizontalStackLayout>
 
-            <!-- NEW: Trash info line -->
+            <!-- Trash info line -->
             <Label x:Name="TrashInfoLabel" TextColor="#93c5fd" />
         </VerticalStackLayout>
 
-
         <!-- Due soon list -->
-        <CollectionView Grid.Row="3" x:Name="DueSoonView" BackgroundColor="#1F2937">
+        <CollectionView Grid.Row="3"
+                        x:Name="DueSoonView"
+                        BackgroundColor="#1F2937"
+                        SelectionMode="None"
+                        ItemSizingStrategy="MeasureAllItems">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Grid Padding="8" ColumnDefinitions="*,Auto">
-                        <Label Text="{Binding Title}" TextColor="White"/>
-                        <Label Grid.Column="1" Text="{Binding DueTag}" TextColor="{Binding DueColor}" />
+                    <Grid Padding="8" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Label Text="{Binding Title}" TextColor="White" LineBreakMode="TailTruncation"/>
+                        <Label Grid.Column="1"
+                               Text="{Binding DueTag}"
+                               TextColor="{Binding DueColor}"
+                               HorizontalTextAlignment="End"/>
                     </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+
     </Grid>
 </ContentPage>
-
