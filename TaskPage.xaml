@@ -5,6 +5,30 @@
              Title="Tasks"
              BackgroundColor="#101820">
 
+    <!-- Page-level styles so pickers/date pickers are readable -->
+    <ContentPage.Resources>
+        <ResourceDictionary>
+
+            <!-- Picker styling for dark theme -->
+            <Style TargetType="Picker">
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="HeightRequest" Value="45" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="TitleColor" Value="#cbd5e1" />
+                <Setter Property="BackgroundColor" Value="#0f1d2f" />
+            </Style>
+
+            <!-- DatePicker styling for dark theme -->
+            <Style TargetType="DatePicker">
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="HeightRequest" Value="45" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="BackgroundColor" Value="#0f1d2f" />
+            </Style>
+
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
     <Grid RowDefinitions="Auto,*" Padding="12" RowSpacing="10">
 
         <!-- Header -->
@@ -55,7 +79,8 @@
                                Margin="0,6"
                                HasShadow="False">
 
-                            <Grid RowDefinitions="Auto,Auto,Auto"
+                            <!-- FIX: Added a 4th row because you use Grid.Row="3" below -->
+                            <Grid RowDefinitions="Auto,Auto,Auto,Auto"
                                   RowSpacing="10">
 
                                 <!-- Title + Description -->
@@ -84,10 +109,9 @@
                                         <Label Text="Priority"
                                                TextColor="#93c5fd"
                                                FontSize="11"/>
+
+                                        <!-- FIX: Background + TitleColor via Style -->
                                         <Picker Title="Priority"
-                                                FontSize="14"
-                                                HeightRequest="45"
-                                                TextColor="White"
                                                 SelectedIndexChanged="OnPriorityChanged">
                                             <Picker.Items>
                                                 <x:String>Low</x:String>
@@ -103,10 +127,9 @@
                                         <Label Text="Status"
                                                TextColor="#93c5fd"
                                                FontSize="11"/>
+
+                                        <!-- FIX: Background + TitleColor via Style -->
                                         <Picker Title="Status"
-                                                FontSize="14"
-                                                HeightRequest="45"
-                                                TextColor="White"
                                                 SelectedIndexChanged="OnStatusChanged">
                                             <Picker.Items>
                                                 <x:String>NotStarted</x:String>
@@ -122,10 +145,9 @@
                                         <Label Text="Due Date"
                                                TextColor="#93c5fd"
                                                FontSize="11"/>
+
+                                        <!-- FIX: Background via Style -->
                                         <DatePicker Date="{Binding DueDate}"
-                                                    FontSize="14"
-                                                    HeightRequest="45"
-                                                    TextColor="White"
                                                     DateSelected="OnDueDateSelected"/>
                                     </VerticalStackLayout>
 
@@ -165,7 +187,7 @@
 
                                 </Grid>
 
-                                <!-- Completed date (hidden if null) -->
+                                <!-- Completed date line (hidden if null) -->
                                 <Label Grid.Row="3"
                                        Text="{Binding LastCompletedOn, StringFormat='Completed: {0:MMM d, yyyy}'}"
                                        TextColor="#93c5fd"

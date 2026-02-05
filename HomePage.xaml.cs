@@ -4,7 +4,6 @@ using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
 using HomeMaintenanceApp.Services;
 using HomeMaintenanceApp.Models;
-// Alias to avoid ambiguity with System.Threading.Tasks.TaskStatus
 using ModelsTaskStatus = HomeMaintenanceApp.Models.TaskStatus;
 
 namespace HomeMaintenanceApp.Pages
@@ -17,31 +16,36 @@ namespace HomeMaintenanceApp.Pages
         {
             InitializeComponent();
 
-            // Local instance (simpler, no DI)
             _manager = new MaintenanceManager();
 
-            // Hydrate any persisted data
             _manager.LoadPropertyFromPreferences();
             _manager.LoadListsFromPreferences();
             _manager.LoadTasksFromPreferences();
 
-            // Initial UI updates
             UpdatePropertyDisplay();
             RefreshKpis();
             LoadDueSoon();
         }
 
-        /// <summary>
-        /// Updates Address, Pool badge visibility, and Trash Day info line.
-        /// </summary>
+        // ? THIS FIXES YOUR ERROR (must match XAML Clicked="OnSetupClicked")
+        private async void OnSetupClicked(object sender, EventArgs e)
+        {
+            // AppShell route is Route="Onboarding"
+            await Shell.Current.GoToAsync("//Onboarding");
+        }
+
         private void UpdatePropertyDisplay()
         {
-            // Address
-            AddressLabel.Text = string.IsNullOrWhiteSpace(_manager.Property?.Address)
-                ? "No address set"
-                : _manager.Property!.Address;
+            var address = _manager.Property?.Address;
 
-            // Pool badge
+            AddressLabel.Text = string.IsNullOrWhiteSpace(address)
+                ? "No address set"
+                : address;
+
+            // Show Setup button only if missing address
+            SetupButton.IsVisible = string.IsNullOrWhiteSpace(address);
+
+            // Pool badge only if HasPool true
             PoolBadge.IsVisible = _manager.Property?.HasPool == true;
 
             // Trash day + next pickup
@@ -57,9 +61,6 @@ namespace HomeMaintenanceApp.Pages
             }
         }
 
-        /// <summary>
-        /// Computes KPI counts and updates labels.
-        /// </summary>
         private void RefreshKpis()
         {
             var active = _manager.Tasks.Count(t => t.Status != ModelsTaskStatus.Completed);
@@ -81,17 +82,10 @@ namespace HomeMaintenanceApp.Pages
             IssuesCount.Text = issues.ToString();
         }
 
-        /// <summary>
-        /// Builds and binds the "Due soon" items.
-        /// Fixes:
-        ///  - HVAC Filter due date matches vinegar/condensate task
-        ///  - Removes duplicates like "New Task" showing twice
-        ///  - Hides "paint chips" from Home screen list
-        ///  - Ensures "Due today" shows on the correct day
-        /// </summary>
         private void LoadDueSoon()
         {
-            // --- Find the vinegar/condensate task due date (used to sync HVAC filter) ---
+            var hasPool = _manager.Property?.HasPool == true;
+
             DateTime? vinegarDue = _manager.Tasks
                 .Where(t => t.Status != ModelsTaskStatus.Completed && t.DueDate.HasValue)
                 .Where(t =>
@@ -102,12 +96,10 @@ namespace HomeMaintenanceApp.Pages
                 .Select(t => t.DueDate!.Value.Date)
                 .FirstOrDefault();
 
-            // Local function: compute the due date we want to SHOW on Home (doesn't change stored data)
             DateTime? EffectiveDueDate(HomeMaintenanceApp.Models.MaintenanceTask t)
             {
                 if (!t.DueDate.HasValue) return null;
 
-                // If this is the HVAC filter task and we have a vinegar due date, use it
                 if (vinegarDue.HasValue &&
                     !string.IsNullOrWhiteSpace(t.Title) &&
                     (t.Title.Contains("hvac filter", StringComparison.OrdinalIgnoreCase) ||
@@ -120,21 +112,29 @@ namespace HomeMaintenanceApp.Pages
                 return t.DueDate.Value.Date;
             }
 
+            bool IsPoolRelated(string? title)
+            {
+                if (string.IsNullOrWhiteSpace(title)) return false;
+
+                return title.Contains("pool", StringComparison.OrdinalIgnoreCase) ||
+                       title.Contains("skimmer", StringComparison.OrdinalIgnoreCase) ||
+                       title.Contains("chlorine", StringComparison.OrdinalIgnoreCase) ||
+                       title.Contains("pump", StringComparison.OrdinalIgnoreCase) ||
+                       title.Contains("backwash", StringComparison.OrdinalIgnoreCase);
+            }
+
             var items = _manager.Tasks
-                // only tasks with due dates that aren't completed
                 .Where(t => t.Status != ModelsTaskStatus.Completed)
-                .Select(t => new
-                {
-                    Task = t,
-                    Due = EffectiveDueDate(t)
-                })
+                .Select(t => new { Task = t, Due = EffectiveDueDate(t) })
                 .Where(x => x.Due.HasValue)
 
-                // --- Remove "paint chips" from the Home screen list ---
-                .Where(x => !(x.Task.Title ?? "")
-                    .Contains("paint chip", StringComparison.OrdinalIgnoreCase))
+                // Hide paint chips from home list
+                .Where(x => !(x.Task.Title ?? "").Contains("paint chip", StringComparison.OrdinalIgnoreCase))
 
-                // --- Remove duplicates (Title + DueDate) e.g., "New Task" showing twice ---
+                // Hide pool tasks unless user has pool
+                .Where(x => hasPool || !IsPoolRelated(x.Task.Title))
+
+                // Remove duplicates by Title + DueDate
                 .GroupBy(x => new
                 {
                     Title = (x.Task.Title ?? "").Trim().ToLowerInvariant(),
@@ -142,11 +142,8 @@ namespace HomeMaintenanceApp.Pages
                 })
                 .Select(g => g.First())
 
-                // sort + take top 10
                 .OrderBy(x => x.Due)
                 .Take(10)
-
-                // build DTO for binding
                 .Select(x => new DueSoonItem
                 {
                     Title = x.Task.Title,
@@ -158,9 +155,6 @@ namespace HomeMaintenanceApp.Pages
             DueSoonView.ItemsSource = items;
         }
 
-        /// <summary>
-        /// Returns a friendly tag for the due date (Overdue, Today, or a date).
-        /// </summary>
         private static string BuildDueTag(DateTime due)
         {
             if (due.Date < DateTime.Today) return $"Overdue: Due {due:MM/dd/yyyy}";
@@ -168,9 +162,6 @@ namespace HomeMaintenanceApp.Pages
             return $"Due {due:MM/dd/yyyy}";
         }
 
-        /// <summary>
-        /// Returns a color for the due tag based on urgency.
-        /// </summary>
         private static Color DueColor(DateTime due)
         {
             if (due.Date < DateTime.Today) return Colors.OrangeRed;
@@ -178,34 +169,25 @@ namespace HomeMaintenanceApp.Pages
             return Colors.MediumSpringGreen;
         }
 
-        /// <summary>
-        /// Computes the next pickup date from today and the selected trash day.
-        /// If today equals the trash day, we show next week’s date.
-        /// </summary>
         private static DateTime NextPickupDate(DateTime today, DayOfWeek trashDay)
         {
             int diff = ((int)trashDay - (int)today.DayOfWeek + 7) % 7;
             return today.AddDays(diff == 0 ? 7 : diff);
         }
 
-        /// <summary>
-        /// Keep KPIs and due-soon fresh when returning to Home.
-        /// </summary>
         protected override void OnAppearing()
         {
             base.OnAppearing();
+
             _manager.LoadPropertyFromPreferences();
-            _manager.LoadTasksFromPreferences();     // in case tasks changed elsewhere
-            _manager.LoadListsFromPreferences();     // optional refresh
+            _manager.LoadTasksFromPreferences();
+            _manager.LoadListsFromPreferences();
 
             UpdatePropertyDisplay();
             RefreshKpis();
             LoadDueSoon();
         }
 
-        /// <summary>
-        /// Lightweight DTO for the Due Soon list binding.
-        /// </summary>
         private class DueSoonItem
         {
             public string Title { get; set; } = "";

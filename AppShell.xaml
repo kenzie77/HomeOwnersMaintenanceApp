@@ -5,54 +5,45 @@
        x:Class="HomeMaintenanceApp.AppShell"
        Shell.NavBarIsVisible="True">
 
-    <!-- Left-side nav -->
-    <Shell.FlyoutBehavior>Locked</Shell.FlyoutBehavior>
-
-    <FlyoutItem Title="Welcome" Route="Onboarding" Icon="welcome.png">
-        <ShellContent Title="Welcome">
-            <pages:OnboardingPage />
-        </ShellContent>
+    <!-- HOME FIRST -->
+    <FlyoutItem Title="Home" Route="Home" Icon="home.png">
+        <ShellContent Title="Home"
+                      ContentTemplate="{DataTemplate pages:HomePage}" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Home" Route="Home" Icon="home.png">
-        <ShellContent Title="Home">
-            <pages:HomePage />
-        </ShellContent>
+    <FlyoutItem Title="Welcome" Route="Onboarding" Icon="welcome.png">
+        <ShellContent Title="Welcome"
+                      ContentTemplate="{DataTemplate pages:OnboardingPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Tasks" Route="Tasks" Icon="tasks.png">
-        <ShellContent Title="Tasks">
-            <pages:TaskPage />
-        </ShellContent>
+        <ShellContent Title="Tasks"
+                      ContentTemplate="{DataTemplate pages:TaskPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Appliances" Route="Appliances" Icon="appliances.png">
-        <ShellContent Title="Appliances">
-            <pages:AppliancesPage />
-        </ShellContent>
+        <ShellContent Title="Appliances"
+                      ContentTemplate="{DataTemplate pages:AppliancesPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Issues" Route="Issues" Icon="issues.png">
-        <ShellContent Title="Issues">
-            <pages:IssuesPage />
-        </ShellContent>
+        <ShellContent Title="Issues"
+                      ContentTemplate="{DataTemplate pages:IssuesPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Knowledge" Route="Knowledge" Icon="knowledge.png">
-        <ShellContent Title="Knowledge">
-            <pages:KnowledgePage />
-        </ShellContent>
+        <ShellContent Title="Knowledge"
+                      ContentTemplate="{DataTemplate pages:KnowledgePage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Seasonal" Route="Seasonal" Icon="seasonal.png">
-        <ShellContent Title="Seasonal">
-            <pages:SeasonalPage />
-        </ShellContent>
+        <ShellContent Title="Seasonal"
+                      ContentTemplate="{DataTemplate pages:SeasonalPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Hurricane" Route="Hurricane" Icon="hurricane.png">
-        <ShellContent Title="Hurricane">
-            <pages:HurricanePage />
-        </ShellContent>
+        <ShellContent Title="Hurricane"
+                      ContentTemplate="{DataTemplate pages:HurricanePage}" />
     </FlyoutItem>
+
 </Shell>
